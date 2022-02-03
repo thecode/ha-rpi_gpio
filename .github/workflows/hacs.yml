@@ -2,7 +2,11 @@ name: HACS Action
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
   schedule:
     - cron: "0 0 * * *"
 
@@ -16,3 +20,5 @@ jobs:
         uses: "hacs/action@main"
         with:
           category: "integration"
+          # Can be removed when https://github.com/home-assistant/brands/pull/3132 is merged
+          ignore: "brands"

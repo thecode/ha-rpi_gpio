@@ -5,7 +5,6 @@ import asyncio
 
 import voluptuous as vol
 
-from homeassistant.components import rpi_gpio
 from homeassistant.components.binary_sensor import PLATFORM_SCHEMA, BinarySensorEntity
 from homeassistant.const import DEVICE_DEFAULT_NAME
 from homeassistant.core import HomeAssistant
@@ -14,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.reload import setup_reload_service
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import DOMAIN, PLATFORMS
+from . import DOMAIN, PLATFORMS, edge_detect, read_input, setup_input
 
 CONF_BOUNCETIME = "bouncetime"
 CONF_INVERT_LOGIC = "invert_logic"
@@ -67,9 +66,7 @@ class RPiGPIOBinarySensor(BinarySensorEntity):
     async def async_read_gpio(self):
         """Read state from GPIO."""
         await asyncio.sleep(float(self._bouncetime) / 1000)
-        self._state = await self.hass.async_add_executor_job(
-            rpi_gpio.read_input, self._port
-        )
+        self._state = await self.hass.async_add_executor_job(read_input, self._port)
         self.async_write_ha_state()
 
     def __init__(self, name, port, pull_mode, bouncetime, invert_logic):
@@ -81,13 +78,13 @@ class RPiGPIOBinarySensor(BinarySensorEntity):
         self._invert_logic = invert_logic
         self._state = None
 
-        rpi_gpio.setup_input(self._port, self._pull_mode)
+        setup_input(self._port, self._pull_mode)
 
         def edge_detected(port):
             """Edge detection handler."""
             self.hass.add_job(self.async_read_gpio)
 
-        rpi_gpio.edge_detect(self._port, edge_detected, self._bouncetime)
+        edge_detect(self._port, edge_detected, self._bouncetime)
 
     @property
     def should_poll(self):
@@ -106,4 +103,4 @@ class RPiGPIOBinarySensor(BinarySensorEntity):
 
     def update(self):
         """Update the GPIO state."""
-        self._state = rpi_gpio.read_input(self._port)
+        self._state = read_input(self._port)

@@ -82,7 +82,8 @@ class RPiGPIOBinarySensor(BinarySensorEntity):
 
         def edge_detected(port):
             """Edge detection handler."""
-            self.hass.add_job(self.async_read_gpio)
+            if self.hass is not None:
+                self.hass.add_job(self.async_read_gpio)
 
         edge_detect(self._port, edge_detected, self._bouncetime)
 

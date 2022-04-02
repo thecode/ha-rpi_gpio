@@ -6,7 +6,7 @@ from time import sleep
 import voluptuous as vol
 
 from homeassistant.components.cover import PLATFORM_SCHEMA, CoverEntity
-from homeassistant.const import CONF_COVERS, CONF_NAME
+from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_UNIQUE_ID
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -34,6 +34,7 @@ _COVERS_SCHEMA = vol.All(
                 CONF_NAME: cv.string,
                 CONF_RELAY_PIN: cv.positive_int,
                 CONF_STATE_PIN: cv.positive_int,
+                vol.Optional(CONF_UNIQUE_ID): cv.string,
             }
         )
     ],
@@ -76,6 +77,7 @@ def setup_platform(
                 relay_time,
                 invert_state,
                 invert_relay,
+                cover.get(CONF_UNIQUE_ID),
             )
         )
     add_entities(covers)
@@ -93,9 +95,11 @@ class RPiGPIOCover(CoverEntity):
         relay_time,
         invert_state,
         invert_relay,
+        unique_id,
     ):
         """Initialize the cover."""
-        self._name = name
+        self._attr_name = name
+        self._attr_unique_id = unique_id
         self._state = False
         self._relay_pin = relay_pin
         self._state_pin = state_pin
@@ -106,11 +110,6 @@ class RPiGPIOCover(CoverEntity):
         setup_output(self._relay_pin)
         setup_input(self._state_pin, self._state_pull_mode)
         write_output(self._relay_pin, 0 if self._invert_relay else 1)
-
-    @property
-    def name(self):
-        """Return the name of the cover if any."""
-        return self._name
 
     def update(self):
         """Update the state of the cover."""

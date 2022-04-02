@@ -22,37 +22,47 @@ The `rpi_gpio` binary sensor platform allows you to read sensor values of the GP
 
 ### Configuration
 
+[Legacy binary sensor configuration](https://github.com/thecode/ha-rpi_gpio/blob/main/legacy-config.md#binary-sensor)
+
 To use your Raspberry Pi's GPIO in your installation, add the following to your `configuration.yaml` file:
 
 ```yaml
 # Basic configuration.yaml entry
 binary_sensor:
   - platform: rpi_gpio
-    ports:
-      11: PIR Office
-      12: PIR Bedroom
+    sensors:
+      - port: 11
+        name: "PIR Office"
+      - port: 12
+        name: "PIR Bedroom"
 ```
 
 ```yaml
 # Full configuration.yaml entry
 binary_sensor:
   - platform: rpi_gpio
-    bouncetime: 80
-    invert_logic: true
-    pull_mode: "DOWN"
-    ports:
-      11: PIR Office
-      12: PIR Bedroom
+    sensors:
+      - port: 11
+        name: "PIR Office"
+        unique_id: "pir_office_sensor_port_11"
+        bouncetime: 80
+        invert_logic: true
+        pull_mode: "DOWN"
+      - port: 12
+        name: "PIR Bedroom"
+        unique_id: "pir_bedroom_sensor_port_12"
 ```
 
 ### Options
 
-| Key            | Required | Default               | Type    | Description                                                                |
-| -------------- | -------- | --------------------- | --------|------------------------------------------------------------------ |
-| `bouncetime`   | no       | `50`                  | integer | The time in milliseconds for port debouncing                                                |
-| `invert_logic` | no       | `false` (ACTIVE HIGH) | boolean | If `true`, inverts the output logic to ACTIVE LOW                                           |
-| `pull_mode`    | no       | `UP`                  | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor |
-| `ports`        | yes      |                       | list    | List of used ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png)) and corresponding names |
+| Key            | Required | Default               | Type    | Description                                                                                                 |
+| -------------- | -------- | --------------------- | --------|------------------------------------------------------------------------------------------------------------ |
+| `sensors`      | yes      |                       | list    | List of sensor IO ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
+| `name`         | yes      |                       | string  | The name for the binary sensor entity                                                                       |
+| `unique_id`    | no       |                       | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI |
+| `bouncetime`   | no       | `50`                  | integer | The time in milliseconds for port debouncing                                                                |
+| `invert_logic` | no       | `false` (ACTIVE HIGH) | boolean | If `true`, inverts the output logic to ACTIVE LOW                                                           |
+| `pull_mode`    | no       | `UP`                  | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor                 |
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 
@@ -94,20 +104,22 @@ cover:
       - relay_pin: 12
         state_pin: 13
         name: "Right door"
+        unique_id: "right_door_cover_port_13"
 ```
 
 ### Options
 
-| Key               | Required | Default | Type    | Description                                                      |
-| ----------------- | -------- | ------- | ------- | ---------------------------------------------------------------- |
-| `relay_time`      | no       | `0.2`   | float   | The time that the relay will be on for in seconds                |
-| `invert_relay`    | no       | `false` | boolean | Invert the relay pin output so that it is active-high (True)     |
-| `state_pull_mode` | no       | `UP`    | string  | The direction the State pin is pulling. It can be `UP` or `DOWN` |
-| `invert_state`    | no       | `false` | boolean | Invert the value of the State pin so that 0 means closed         |
-| `covers`          | yes      |         | list    | List of covers                                                   |
-| `relay_pin`       | yes      |         | integer | The pin of your Raspberry Pi where the relay is connected        |
-| `state_pin`       | yes      |         | integer | The pin of your Raspberry Pi to retrieve the state               |
-| `name`            | no       |         | string  | The name for the cover entity                                    |
+| Key               | Required | Default | Type    | Description                                                                                                |
+| ----------------- | -------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------- |
+| `relay_time`      | no       | `0.2`   | float   | The time that the relay will be on for in seconds                                                          |
+| `invert_relay`    | no       | `false` | boolean | Invert the relay pin output so that it is active-high (True)                                               |
+| `state_pull_mode` | no       | `UP`    | string  | The direction the State pin is pulling. It can be `UP` or `DOWN`                                           |
+| `invert_state`    | no       | `false` | boolean | Invert the value of the State pin so that 0 means closed                                                   |
+| `covers`          | yes      |         | list    | List of covers                                                                                             |
+| `relay_pin`       | yes      |         | integer | The pin of your Raspberry Pi where the relay is connected                                                  |
+| `state_pin`       | yes      |         | integer | The pin of your Raspberry Pi to retrieve the state                                                         |
+| `name`            | no       |         | string  | The name for the cover entity                                                                              |
+| `unique_id`       | no       |         | string  | An ID that uniquely identifies the cover. Set this to a unique value to allow customization through the UI |
 
 ### Remote Raspberry Pi Cover
 
@@ -119,37 +131,45 @@ The `rpi_gpio` switch platform allows you to control the GPIOs of your [Raspberr
 
 ### Configuration
 
+[Legacy switch configuration](https://github.com/thecode/ha-rpi_gpio/blob/main/legacy-config.md#switch)
+
 To use your Raspberry Pi's GPIO in your installation, add the following to your `configuration.yaml` file:
 
 ```yaml
 # Basic configuration.yaml entry
 switch:
   - platform: rpi_gpio
-    ports:
-      11: Fan Office
-      12: Light Desk
+    switches:
+      - port: 11
+        name: "Fan Office"
+      - port: 12
+        name: "Light Desk"
 ```
 
 ```yaml
 # Full configuration.yaml entry
 switch:
   - platform: rpi_gpio
-    invert_logic: true
-    ports:
-      11: Fan Office
-      12: Light Desk
+    switches:
+      - port: 11
+        name: "Fan Office"
+        unique_id: "fan_office_switch_port_11"
+      - port: 12
+        name: "Light Desk"
+        unique_id: "light_desk_switch_port_12"
+        invert_logic: true
 ```
 
 ### Options
 
-| Key            | Required | Default | Type            | Description                                         |
-| -------------- | -------- | ------- | --------------- | --------------------------------------------------- |
-| `invert_logic` | no       | `false` | boolean         | If true, inverts the output logic to ACTIVE LOW     |
-| `ports`        | yes      |                       | list    | List of used ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png)) and corresponding names |
+| Key            | Required | Default | Type    | Description                                                                                                 |
+| -------------- | -------- | ------- | --------| ----------------------------------------------------------------------------------------------------------- |
+| `switches`     | yes      |         | list    | List of switch IO ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
+| `name`         | yes      |         | string  | The name for the switch entity                                                                              |
+| `unique_id`    | no       |         | string  | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI |
+| `invert_logic` | no       | `false` | boolean | If true, inverts the output logic to ACTIVE LOW                                                             |
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
-
-**Note that a pin managed by Home Assistant is expected to be exclusive to Home Assistant.**
 
 A common question is what does Port refer to, this number is the actual GPIO #, not the pin #.
 For example, if you have a relay connected to pin 11 its GPIO # is 17.
@@ -158,6 +178,7 @@ For example, if you have a relay connected to pin 11 its GPIO # is 17.
 # Basic configuration.yaml entry
 switch:
   - platform: rpi_gpio
-    ports:
-      17: Speaker Relay
+    switches:
+      - port: 17
+        name: "Speaker Relay"
 ```

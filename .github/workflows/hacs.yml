@@ -20,5 +20,3 @@ jobs:
         uses: "hacs/action@main"
         with:
           category: "integration"
-          # Can be removed when https://github.com/home-assistant/brands/pull/3132 is merged
-          ignore: "brands"

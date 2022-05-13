@@ -1,6 +1,6 @@
 # Home Assistant Raspberry Pi GPIO custom integration
 
-**This is a spin-off from the original Home Assistant integration which was marked as deprecated and will be removed in Home Assistant Core 2022.6.**
+**This is a spin-off from the original Home Assistant integration, which was removed in Home Assistant Core version 2022.6.**
 
 The `rpi_gpio` integration supports the following platforms: `Binary Sensor`, `Cover`, `Switch`
 

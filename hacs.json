@@ -1,6 +1,4 @@
 {
   "name": "Raspberry Pi GPIO",
-  "domains": ["binary_sensor", "cover", "switch"],
-  "iot_class": "Local Push",
   "homeassistant": "2022.2.0"
 }

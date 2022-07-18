@@ -4,4 +4,4 @@ isort==5.10.1
 mypy==0.961
 pre-commit==2.20.0
 pydocstyle==6.1.1
-pylint==2.14.4
+pylint==2.14.5

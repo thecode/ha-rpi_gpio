@@ -1,34 +1,36 @@
 """Support for binary sensor using RPi GPIO."""
 from __future__ import annotations
 
-import asyncio
-
 import voluptuous as vol
 
 from homeassistant.components.binary_sensor import PLATFORM_SCHEMA, BinarySensorEntity
+from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import (
+    CONF_BINARY_SENSORS,
     CONF_NAME,
     CONF_PORT,
     CONF_SENSORS,
     CONF_UNIQUE_ID,
-    DEVICE_DEFAULT_NAME,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.reload import setup_reload_service
+from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import DOMAIN, PLATFORMS, edge_detect, read_input, setup_input
-
-CONF_BOUNCETIME = "bouncetime"
-CONF_INVERT_LOGIC = "invert_logic"
-CONF_PORTS = "ports"
-CONF_PULL_MODE = "pull_mode"
-
-DEFAULT_BOUNCETIME = 50
-DEFAULT_INVERT_LOGIC = False
-DEFAULT_PULL_MODE = "UP"
+from . import RpiGPIO
+from .const import (
+    CONF_BOUNCETIME,
+    CONF_INVERT_LOGIC,
+    CONF_PORTS,
+    CONF_PULL_MODE,
+    DEFAULT_BOUNCETIME,
+    DEFAULT_INVERT_LOGIC,
+    DEFAULT_PULL_MODE,
+    DOMAIN,
+)
+from .entity import RpiGPIOEntity
 
 _SENSORS_LEGACY_SCHEMA = vol.Schema({cv.positive_int: cv.string})
 
@@ -59,83 +61,73 @@ PLATFORM_SCHEMA = vol.All(
 )
 
 
-def setup_platform(
+async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the Raspberry PI GPIO devices."""
-    setup_reload_service(hass, DOMAIN, PLATFORMS)
 
-    sensors = []
+    async_create_issue(
+        hass,
+        DOMAIN,
+        "deprecated_yaml",
+        breaks_in_ha_version="2022.11.0",
+        is_fixable=False,
+        severity=IssueSeverity.WARNING,
+        translation_key="deprecated_yaml",
+    )
+    hass.async_create_task(
+        hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": SOURCE_IMPORT},
+            data=config,
+        )
+    )
 
-    sensors_conf = config.get(CONF_SENSORS)
-    if sensors_conf is not None:
-        for sensor in sensors_conf:
-            sensors.append(
-                RPiGPIOBinarySensor(
-                    sensor[CONF_NAME],
-                    sensor[CONF_PORT],
-                    sensor[CONF_PULL_MODE],
-                    sensor[CONF_BOUNCETIME],
-                    sensor[CONF_INVERT_LOGIC],
-                    sensor.get(CONF_UNIQUE_ID),
-                )
-            )
 
-        add_entities(sensors, True)
-        return
-
-    pull_mode = config[CONF_PULL_MODE]
-    bouncetime = config[CONF_BOUNCETIME]
-    invert_logic = config[CONF_INVERT_LOGIC]
-
-    ports = config[CONF_PORTS]
-    for port_num, port_name in ports.items():
-        sensors.append(
-            RPiGPIOBinarySensor(
-                port_name, port_num, pull_mode, bouncetime, invert_logic
-            )
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up rpi_power binary sensor."""
+    rpi_gpio: RpiGPIO = hass.data[DOMAIN]
+    entities: list[RPiGPIOBinarySensor] = []
+    for port in entry.data.get(CONF_BINARY_SENSORS, {}):
+        entities.append(
+            RPiGPIOBinarySensor(rpi_gpio, port, entry.data[CONF_BINARY_SENSORS][port])
         )
 
-    add_entities(sensors, True)
+    async_add_entities(entities, True)
 
 
-class RPiGPIOBinarySensor(BinarySensorEntity):
+class RPiGPIOBinarySensor(RpiGPIOEntity, BinarySensorEntity):
     """Represent a binary sensor that uses Raspberry Pi GPIO."""
 
-    async def async_read_gpio(self):
-        """Read state from GPIO."""
-        await asyncio.sleep(float(self._bouncetime) / 1000)
-        self._state = await self.hass.async_add_executor_job(read_input, self._port)
-        self.async_write_ha_state()
+    async def async_update(self) -> None:
+        """Update entity."""
+        self._attr_is_on = (
+            await self.rpi_gpio.async_read_input(self.port) != self._invert_logic
+        )
 
-    def __init__(self, name, port, pull_mode, bouncetime, invert_logic, unique_id=None):
-        """Initialize the RPi binary sensor."""
-        self._attr_name = name or DEVICE_DEFAULT_NAME
-        self._attr_unique_id = unique_id
-        self._attr_should_poll = False
-        self._port = port
-        self._pull_mode = pull_mode
-        self._bouncetime = bouncetime
-        self._invert_logic = invert_logic
-        self._state = None
+    @callback
+    def _update_callback(self) -> None:
+        """Call update method."""
+        self.async_schedule_update_ha_state(True)
 
-        setup_input(self._port, self._pull_mode)
+    async def async_added_to_hass(self) -> None:
+        """Register callbacks"""
 
-        def edge_detected(port):
-            """Edge detection handler."""
-            if self.hass is not None:
-                self.hass.add_job(self.async_read_gpio)
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass, f"port_{self.port}_edge_detected", self._update_callback
+            )
+        )
+        await super().async_added_to_hass()
 
-        edge_detect(self._port, edge_detected, self._bouncetime)
-
-    @property
-    def is_on(self):
-        """Return the state of the entity."""
-        return self._state != self._invert_logic
-
-    def update(self):
-        """Update the GPIO state."""
-        self._state = read_input(self._port)
+    async def async_will_remove_from_hass(self) -> None:
+        """Remove edge detection."""
+        await self.rpi_gpio.async_remove_edge_detection(self.port)
+        await super().async_will_remove_from_hass()

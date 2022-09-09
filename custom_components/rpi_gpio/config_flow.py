@@ -188,21 +188,14 @@ def _async_get_registered_entities(
     ]
 
 
-def board_supported(hass: HomeAssistant) -> bool:
-    """Return if the system baord is a rapsberry."""
-    try:
-        import RPi.GPIO
-    except RuntimeError:
-        return False
-    return True
-
-
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Raspberry Pi GPIO."""
 
     VERSION = 1
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(
+        self, user_input: dict[str, str] | None = None
+    ) -> FlowResult:
         """Handle a flow initialized by the user."""
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
@@ -210,7 +203,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(step_id="user")
 
-        if not board_supported:
+        try:
+            import RPi.GPIO
+        except RuntimeError:
             return self.async_abort(reason="not_supported")
         return self.async_create_entry(title="Raspberry Pi GPIO", data={})
 
@@ -397,12 +392,19 @@ class RpiGPIOOptionsFlowHandler(config_entries.OptionsFlow):
                     }
                 ),
             )
+        _domain_to_key = {
+            "binary_sensor": CONF_BINARY_SENSORS,
+            "cover": CONF_COVERS,
+            "switch": CONF_SWITCHES,
+        }
         new_data: dict[str, dict[str, Any]] = self.config_entry.data.copy()
         for entity in user_input[CONF_ENTITIES]:
             platform, unique_id = entity.split("/")
-            new_data[f"{platform}s"].pop(unique_id)
+            new_data[_domain_to_key[platform]].pop(unique_id)
             async_dispatcher_send(self.hass, f"port_{unique_id}_removed")
 
         self.hass.config_entries.async_update_entry(self.config_entry, data=new_data)
-
+        self.hass.async_create_task(
+            self.hass.config_entries.async_reload(self.config_entry.entry_id)
+        )
         return self.async_create_entry(title="", data={})

@@ -9,8 +9,10 @@ import voluptuous as vol
 from homeassistant.components.cover import PLATFORM_SCHEMA, CoverEntity
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_UNIQUE_ID
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
@@ -107,6 +109,7 @@ class RPiGPIOCover(CoverEntity):
     ):
         """Initialize the cover."""
         self.rpi_gpio = rpi_gpio
+        self.cover = cover
         self._relay_pin = int(data[CONF_RELAY_PIN])
         self._relay_time = int(data[CONF_RELAY_TIME])
         self._state_pin = int(data[CONF_STATE_PIN])
@@ -126,7 +129,7 @@ class RPiGPIOCover(CoverEntity):
             await self.rpi_gpio.async_read_input(self._state_pin) != self._invert_state
         )
 
-    async def _async_trigger(self):
+    async def _async_trigger(self) -> None:
         """Trigger the cover."""
         await self.rpi_gpio.async_write_output(
             self._relay_pin, 1 if self._invert_relay else 0
@@ -146,3 +149,25 @@ class RPiGPIOCover(CoverEntity):
         """Open the cover."""
         if self.is_closed:
             await self._async_trigger()
+
+    @callback
+    async def async_remove_entity(self) -> None:
+        """Remove entity from registry."""
+
+        if self.registry_entry:
+            entity_registry.async_get(self.hass).async_remove(self.entity_id)
+        else:
+            await self.async_remove(force_remove=True)
+
+    async def async_added_to_hass(self) -> None:
+        """Register callbacks"""
+
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass, f"port_{self.cover}_removed", self.async_remove_entity
+            ),
+        )
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Reset relay pin to input."""
+        await self.rpi_gpio.async_reset_port(self._relay_pin)

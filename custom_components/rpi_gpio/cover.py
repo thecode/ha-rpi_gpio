@@ -1,37 +1,31 @@
 """Support for controlling a Raspberry Pi cover."""
 from __future__ import annotations
 
-import asyncio
-from typing import Any
+from time import sleep
 
 import voluptuous as vol
 
 from homeassistant.components.cover import PLATFORM_SCHEMA, CoverEntity
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_UNIQUE_ID
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_registry
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
+from homeassistant.helpers.reload import setup_reload_service
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import DOMAIN, RpiGPIO
-from .const import (
-    CONF_INVERT_RELAY,
-    CONF_INVERT_STATE,
-    CONF_RELAY_PIN,
-    CONF_RELAY_TIME,
-    CONF_STATE_PIN,
-    CONF_STATE_PULL_MODE,
-    DEFAULT_INVERT_RELAY,
-    DEFAULT_INVERT_STATE,
-    DEFAULT_RELAY_TIME,
-    DEFAULT_STATE_PULL_MODE,
-)
+from . import DOMAIN, PLATFORMS, read_input, setup_input, setup_output, write_output
 
+CONF_RELAY_PIN = "relay_pin"
+CONF_RELAY_TIME = "relay_time"
+CONF_STATE_PIN = "state_pin"
+CONF_STATE_PULL_MODE = "state_pull_mode"
+CONF_INVERT_STATE = "invert_state"
+CONF_INVERT_RELAY = "invert_relay"
+
+DEFAULT_RELAY_TIME = 0.2
+DEFAULT_STATE_PULL_MODE = "UP"
+DEFAULT_INVERT_STATE = False
+DEFAULT_INVERT_RELAY = False
 _COVERS_SCHEMA = vol.All(
     cv.ensure_list,
     [
@@ -57,117 +51,87 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
-async def async_setup_platform(
+def setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the RPi cover platform."""
-    async_create_issue(
-        hass,
-        DOMAIN,
-        "deprecated_yaml",
-        breaks_in_ha_version="2022.11.0",
-        is_fixable=False,
-        severity=IssueSeverity.WARNING,
-        translation_key="deprecated_yaml",
-    )
-    hass.async_create_task(
-        hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": SOURCE_IMPORT},
-            data=config,
+    setup_reload_service(hass, DOMAIN, PLATFORMS)
+
+    relay_time = config[CONF_RELAY_TIME]
+    state_pull_mode = config[CONF_STATE_PULL_MODE]
+    invert_state = config[CONF_INVERT_STATE]
+    invert_relay = config[CONF_INVERT_RELAY]
+    covers = []
+    covers_conf = config[CONF_COVERS]
+
+    for cover in covers_conf:
+        covers.append(
+            RPiGPIOCover(
+                cover[CONF_NAME],
+                cover[CONF_RELAY_PIN],
+                cover[CONF_STATE_PIN],
+                state_pull_mode,
+                relay_time,
+                invert_state,
+                invert_relay,
+                cover.get(CONF_UNIQUE_ID),
+            )
         )
-    )
-
-
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up rpi_power binary sensor."""
-    rpi_gpio: RpiGPIO = hass.data[DOMAIN]
-    entities: list[RPiGPIOCover] = []
-    for cover in entry.data.get(CONF_COVERS, {}):
-        entities.append(RPiGPIOCover(rpi_gpio, cover, entry.data[CONF_COVERS][cover]))
-
-    async_add_entities(entities, True)
+    add_entities(covers)
 
 
 class RPiGPIOCover(CoverEntity):
     """Representation of a Raspberry GPIO cover."""
 
-    _attr_has_entity_name = True
-
     def __init__(
         self,
-        rpi_gpio: RpiGPIO,
-        cover: str,
-        data: dict[str, Any],
+        name,
+        relay_pin,
+        state_pin,
+        state_pull_mode,
+        relay_time,
+        invert_state,
+        invert_relay,
+        unique_id,
     ):
         """Initialize the cover."""
-        self.rpi_gpio = rpi_gpio
-        self.cover = cover
-        self._relay_pin = int(data[CONF_RELAY_PIN])
-        self._relay_time = int(data[CONF_RELAY_TIME])
-        self._state_pin = int(data[CONF_STATE_PIN])
-        self._invert_relay = int(data[CONF_INVERT_RELAY])
-        self._invert_state: bool = data[CONF_INVERT_STATE]
-        if name := data.get(CONF_NAME):
-            self._attr_has_entity_name = False
-        self._attr_name = name or cover
-        self._attr_unique_id = data.get(CONF_UNIQUE_ID) or cover
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, "Raspberry Pi")}, name="Raspberry Pi GPIO"
-        )
+        self._attr_name = name
+        self._attr_unique_id = unique_id
+        self._state = False
+        self._relay_pin = relay_pin
+        self._state_pin = state_pin
+        self._state_pull_mode = state_pull_mode
+        self._relay_time = relay_time
+        self._invert_state = invert_state
+        self._invert_relay = invert_relay
+        setup_output(self._relay_pin)
+        setup_input(self._state_pin, self._state_pull_mode)
+        write_output(self._relay_pin, 0 if self._invert_relay else 1)
 
-    async def async_update(self) -> None:
-        """Update entity."""
-        self._attr_is_closed = (
-            await self.rpi_gpio.async_read_input(self._state_pin) != self._invert_state
-        )
+    def update(self):
+        """Update the state of the cover."""
+        self._state = read_input(self._state_pin)
 
-    async def _async_trigger(self) -> None:
+    @property
+    def is_closed(self):
+        """Return true if cover is closed."""
+        return self._state != self._invert_state
+
+    def _trigger(self):
         """Trigger the cover."""
-        await self.rpi_gpio.async_write_output(
-            self._relay_pin, 1 if self._invert_relay else 0
-        )
-        await asyncio.sleep(self._relay_time)
-        await self.rpi_gpio.async_write_output(
-            self._relay_pin, 0 if self._invert_relay else 1
-        )
-        self.async_schedule_update_ha_state(True)
+        write_output(self._relay_pin, 1 if self._invert_relay else 0)
+        sleep(self._relay_time)
+        write_output(self._relay_pin, 0 if self._invert_relay else 1)
 
-    async def async_close_cover(self, **kwargs: Any) -> None:
+    def close_cover(self, **kwargs):
         """Close the cover."""
         if not self.is_closed:
-            await self._async_trigger()
+            self._trigger()
 
-    async def async_open_cover(self, **kwargs: Any) -> None:
+    def open_cover(self, **kwargs):
         """Open the cover."""
         if self.is_closed:
-            await self._async_trigger()
-
-    @callback
-    async def async_remove_entity(self) -> None:
-        """Remove entity from registry."""
-
-        if self.registry_entry:
-            entity_registry.async_get(self.hass).async_remove(self.entity_id)
-        else:
-            await self.async_remove(force_remove=True)
-
-    async def async_added_to_hass(self) -> None:
-        """Register callbacks"""
-
-        self.async_on_remove(
-            async_dispatcher_connect(
-                self.hass, f"port_{self.cover}_removed", self.async_remove_entity
-            ),
-        )
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Reset relay pin to input."""
-        await self.rpi_gpio.async_reset_port(self._relay_pin)
+            self._trigger()

@@ -1,57 +1,30 @@
 {
   "config": {
     "step": {
+      "add_binary_sensor": {
+        "data": {
+          "port": "Select port to set as binary sensor"
+        }
+      },
       "user": {
-        "description": "[%key:common::config_flow::description::confirm_setup%]"
-      }
-    },
-    "abort": {
-      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
-      "not_supported": "A Raspberry pi board is not detected, make sure that your kernel is recent and the hardware is supported"
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
         "menu_options": {
           "add_binary_sensor": "Add Binary sensor",
           "add_switch": "Add Switch",
           "add_cover": "Add Cover",
           "remove": "Remove entity"
         }
-      },
-      "add_binary_sensor": {
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
         "data": {
-          "binary_sensors": "Select pins to use as binary sensors",
-          "bouncetime": "The time in milliseconds for port debouncing",
-          "invert_logic": "Set input port to ACTIVE_LOW (default is ACTIVE_HIGH)",
-          "pull_mode": "Type of internal pull resistor to use"
-        }
-      },
-      "add_switch": {
-        "data": {
-          "switches": "Select pins to use as switches",
-          "invert_logic": "Invert the output logic to ACTIVE LOW"
-        }
-      },
-      "add_cover": {
-        "data": {
-          "relay_time": "Relay ON period (seconds)",
-          "invert_relay": "Set the relay pin output to ACTIVE_HIGH",
-          "state_pull_mode": "Type of internal pull resistor to use",
-          "invert_state": "Set input port to ACTIVE_LOW (default is ACTIVE_HIGH)",
-          "relay_pin": "Select pin to use as relay",
-          "state_pin": "Select pin to use as sensor"
-        }
-      },
-      "remove": {
-        "data": {
-          "entities": "Entities"
+          "bouncetime": "Port debounce time (milliseconds)",
+          "invert_logic": "Invert port state (default is ACTIVE_HIGH)",
+          "pull_mode": "Set internal pull resistor"
         }
       }
-    },
-    "error": {
-      "same_port": "Relay pin and state pin can't be the same."
     }
   },
   "issues": {

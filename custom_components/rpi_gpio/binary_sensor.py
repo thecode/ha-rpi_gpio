@@ -4,13 +4,14 @@ from __future__ import annotations
 import voluptuous as vol
 
 from homeassistant.components.binary_sensor import PLATFORM_SCHEMA, BinarySensorEntity
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONF_BINARY_SENSORS,
     CONF_NAME,
+    CONF_PLATFORM,
     CONF_PORT,
     CONF_SENSORS,
     CONF_UNIQUE_ID,
+    Platform,
 )
 from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
@@ -22,6 +23,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from . import RpiGPIO
 from .const import (
     CONF_BOUNCETIME,
+    CONF_GPIO,
     CONF_INVERT_LOGIC,
     CONF_PORTS,
     CONF_PULL_MODE,
@@ -78,13 +80,6 @@ async def async_setup_platform(
         severity=IssueSeverity.WARNING,
         translation_key="deprecated_yaml",
     )
-    hass.async_create_task(
-        hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": SOURCE_IMPORT},
-            data=config,
-        )
-    )
 
 
 async def async_setup_entry(
@@ -93,14 +88,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up rpi_power binary sensor."""
-    rpi_gpio: RpiGPIO = hass.data[DOMAIN]
-    entities: list[RPiGPIOBinarySensor] = []
-    for port in entry.data.get(CONF_BINARY_SENSORS, {}):
-        entities.append(
-            RPiGPIOBinarySensor(rpi_gpio, port, entry.data[CONF_BINARY_SENSORS][port])
-        )
+    rpi_gpio: RpiGPIO = hass.data[DOMAIN][CONF_GPIO]
+    await hass.async_add_executor_job(rpi_gpio.setup_port, entry)
 
-    async_add_entities(entities, True)
+    async_add_entities([RPiGPIOBinarySensor(hass, entry, rpi_gpio)], True)
 
 
 class RPiGPIOBinarySensor(RpiGPIOEntity, BinarySensorEntity):
@@ -109,7 +100,7 @@ class RPiGPIOBinarySensor(RpiGPIOEntity, BinarySensorEntity):
     async def async_update(self) -> None:
         """Update entity."""
         self._attr_is_on = (
-            await self.rpi_gpio.async_read_input(self.port) != self._invert_logic
+            await self.rpi_gpio.async_read_input(self.port) != self.invert_logic
         )
 
     @callback

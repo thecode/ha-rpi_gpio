@@ -1,31 +1,26 @@
 """Constants for the Raspberry Pi GPIO integration."""
 
-DOMAIN = "rpi_gpio"
-
-CONF_BOUNCETIME = "bouncetime"
-CONF_PULL_MODE = "pull_mode"
-CONF_INVERT_LOGIC = "invert_logic"
-CONF_PORTS = "ports"
-CONF_RELAY_PIN = "relay_pin"
-CONF_RELAY_TIME = "relay_time"
-CONF_STATE_PIN = "state_pin"
-CONF_STATE_PULL_MODE = "state_pull_mode"
-CONF_INVERT_STATE = "invert_state"
-CONF_INVERT_RELAY = "invert_relay"
+from typing import Final
 
 
-DEFAULT_BOUNCETIME = 50
-DEFAULT_INVERT_LOGIC = False
-DEFAULT_PULL_MODE = "UP"
-DEFAULT_RELAY_TIME = 0.2
-DEFAULT_STATE_PULL_MODE = "UP"
-DEFAULT_INVERT_STATE = False
-DEFAULT_INVERT_RELAY = False
+DOMAIN: Final = "rpi_gpio"
 
-PUD_DOWN = "21"
-PUD_UP = "22"
+CONF_GPIO: Final = "gpio"
+CONF_CONFIGURED_PORTS: Final = "configured_ports"
+CONF_PORTS: Final = "ports"
 
-GPIO_PIN_MAP = {
+CONF_BOUNCETIME: Final = "bouncetime"
+CONF_PULL_MODE: Final = "pull_mode"
+CONF_INVERT_LOGIC: Final = "invert_logic"
+
+PUD_DOWN: Final = "21"
+PUD_UP: Final = "22"
+
+DEFAULT_BOUNCETIME: Final = 50
+DEFAULT_INVERT_LOGIC: Final = False
+DEFAULT_PULL_MODE: Final = PUD_UP
+
+GPIO_PIN_MAP: Final = {
     "0": "27",
     "1": "28",
     "2": "3",

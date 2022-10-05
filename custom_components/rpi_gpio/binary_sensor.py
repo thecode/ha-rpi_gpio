@@ -7,11 +7,9 @@ from homeassistant.components.binary_sensor import PLATFORM_SCHEMA, BinarySensor
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
-    CONF_PLATFORM,
     CONF_PORT,
     CONF_SENSORS,
     CONF_UNIQUE_ID,
-    Platform,
 )
 from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
@@ -87,7 +85,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up rpi_power binary sensor."""
+    """Set up rpi_gpio binary sensor."""
     rpi_gpio: RpiGPIO = hass.data[DOMAIN][CONF_GPIO]
     await hass.async_add_executor_job(rpi_gpio.setup_port, entry)
 

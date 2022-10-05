@@ -20,8 +20,10 @@ from .const import (
     CONF_BOUNCETIME,
     CONF_CONFIGURED_PORTS,
     CONF_GPIO,
+    CONF_INVERT_LOGIC,
     CONF_PULL_MODE,
     DEFAULT_BOUNCETIME,
+    DEFAULT_INVERT_LOGIC,
     DEFAULT_PULL_MODE,
     DOMAIN,
 )
@@ -125,4 +127,12 @@ class RpiGPIO:
                 GPIO.BOTH,
                 callback=edge_detected,
                 bouncetime=entry.options.get(CONF_BOUNCETIME, DEFAULT_BOUNCETIME),
+            )
+        elif entry.data[CONF_PLATFORM] == Platform.SWITCH:
+            GPIO.setup(
+                int(entry.data[CONF_PORT]),
+                GPIO.OUT,
+                initial=GPIO.HIGH
+                if entry.options.get(CONF_INVERT_LOGIC, DEFAULT_INVERT_LOGIC)
+                else GPIO.LOW,
             )

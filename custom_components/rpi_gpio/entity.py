@@ -1,16 +1,16 @@
 """Base entity for Rpi GPIO ports."""
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PORT
-from homeassistant.helpers.entity import DeviceInfo, Entity
+from homeassistant.const import CONF_NAME, CONF_PORT
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo, Entity
 
 from . import RpiGPIO
 from .const import (
     CONF_CONFIGURED_PORTS,
     CONF_INVERT_LOGIC,
-    DOMAIN,
     DEFAULT_INVERT_LOGIC,
+    DOMAIN,
 )
 
 
@@ -31,7 +31,7 @@ class RpiGPIOEntity(Entity):
         self._attr_unique_id = self.port
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._attr_unique_id)},
-            name=self.port,
+            name=f"{entry.data[CONF_NAME]} (GPIO {self.port})",
             manufacturer="Raspberry Pi",
         )
 

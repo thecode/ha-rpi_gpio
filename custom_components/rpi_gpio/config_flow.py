@@ -6,7 +6,13 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_PLATFORM, CONF_PORT, TIME_MILLISECONDS, Platform
+from homeassistant.const import (
+    CONF_NAME,
+    CONF_PLATFORM,
+    CONF_PORT,
+    TIME_MILLISECONDS,
+    Platform,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
@@ -122,12 +128,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="add_binary_sensor",
                 data_schema=vol.Schema(
                     {
+                        vol.Required(CONF_NAME): selector.TextSelector(),
                         vol.Required(CONF_PORT, default=[]): selector.SelectSelector(
                             selector.SelectSelectorConfig(
                                 options=_get_avaiable_ports(self.hass),
                                 mode=selector.SelectSelectorMode.DROPDOWN,
                             )
-                        )
+                        ),
                     }
                 ),
             )
@@ -136,7 +143,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
 
         return self.async_create_entry(
-            title=f"Binary Sensor ({user_input[CONF_PORT]})",
+            title=f"{user_input[CONF_NAME]} (GPIO {user_input[CONF_PORT]})",
             data={CONF_PLATFORM: Platform.BINARY_SENSOR, **user_input},
         )
 

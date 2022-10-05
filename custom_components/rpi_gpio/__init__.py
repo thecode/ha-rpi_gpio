@@ -1,59 +1,128 @@
-"""Support for controlling GPIO pins of a Raspberry Pi."""
+"""The Raspberry Pi GPIO integration."""
+from __future__ import annotations
+
+import asyncio
+from typing import Any
 
 from RPi import GPIO  # pylint: disable=import-error
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    EVENT_HOMEASSISTANT_START,
+    CONF_PLATFORM,
+    CONF_PORT,
     EVENT_HOMEASSISTANT_STOP,
     Platform,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import ConfigType
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-DOMAIN = "rpi_gpio"
-PLATFORMS = [
-    Platform.BINARY_SENSOR,
-    Platform.COVER,
-    Platform.SWITCH,
-]
+from .const import (
+    CONF_BOUNCETIME,
+    CONF_CONFIGURED_PORTS,
+    CONF_GPIO,
+    CONF_PULL_MODE,
+    DEFAULT_BOUNCETIME,
+    DEFAULT_PULL_MODE,
+    DOMAIN,
+)
+
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR]
 
 
-def setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the Raspberry PI GPIO component."""
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up Raspberry Pi GPIO from a config entry."""
 
-    def cleanup_gpio(event):
-        """Stuff to do before stopping."""
+    @callback
+    def cleanup_gpio(event: Any) -> None:
+        """Cleanup before stopping."""
         GPIO.cleanup()
 
-    def prepare_gpio(event):
-        """Stuff to do when Home Assistant starts."""
-        hass.bus.listen_once(EVENT_HOMEASSISTANT_STOP, cleanup_gpio)
+    if DOMAIN not in hass.data:
+        # actions that should be done the first time only
+        hass.data[DOMAIN] = {}
+        hass.data[DOMAIN][CONF_CONFIGURED_PORTS] = []
+        hass.data[DOMAIN][CONF_GPIO] = RpiGPIO(hass)
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, cleanup_gpio)
 
-    hass.bus.listen_once(EVENT_HOMEASSISTANT_START, prepare_gpio)
-    GPIO.setmode(GPIO.BCM)
+    await hass.config_entries.async_forward_entry_setup(
+        entry, entry.data[CONF_PLATFORM]
+    )
+
+    hass.data[DOMAIN][CONF_CONFIGURED_PORTS].append(entry.data[CONF_PORT])
+
+    entry.async_on_unload(entry.add_update_listener(options_updated))
+
     return True
 
 
-def setup_output(port):
-    """Set up a GPIO as output."""
-    GPIO.setup(port, GPIO.OUT)
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    if unload_ok := await hass.config_entries.async_forward_entry_unload(
+        entry, entry.data[CONF_PLATFORM]
+    ):
+        if not hass.data[DOMAIN][CONF_CONFIGURED_PORTS]:
+            del hass.data[DOMAIN]
+    return unload_ok
 
 
-def setup_input(port, pull_mode):
-    """Set up a GPIO as input."""
-    GPIO.setup(port, GPIO.IN, GPIO.PUD_DOWN if pull_mode == "DOWN" else GPIO.PUD_UP)
+async def options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Update when config_entry options update."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
-def write_output(port, value):
-    """Write a value to a GPIO."""
-    GPIO.output(port, value)
+class RpiGPIO:
+    """Base class for Rpi GPIOs."""
 
+    def __init__(self, hass: HomeAssistant) -> None:
+        """Initialize the class."""
+        self.hass = hass
+        GPIO.setmode(GPIO.BCM)
 
-def read_input(port):
-    """Read a value from a GPIO."""
-    return GPIO.input(port)
+    async def async_reset_port(self, port: str) -> None:
+        """Reset removed port to input."""
+        await self.hass.async_add_executor_job(GPIO.setup, int(port), GPIO.IN)
 
+    async def async_read_input(self, port: str) -> bool:
+        """Read a value from a GPIO."""
+        return await self.hass.async_add_executor_job(GPIO.input, int(port))
 
-def edge_detect(port, event_callback, bounce):
-    """Add detection for RISING and FALLING events."""
-    GPIO.add_event_detect(port, GPIO.BOTH, callback=event_callback, bouncetime=bounce)
+    async def async_write_output(self, port: str, value: int) -> None:
+        """Write value to a GPIO."""
+        await self.hass.async_add_executor_job(GPIO.output, int(port), value)
+
+    async def async_remove_edge_detection(self, port: str) -> None:
+        """Remove edge detection if input is deleted."""
+        await self.hass.async_add_executor_job(GPIO.remove_event_detect, int(port))
+
+    @callback
+    async def async_signal_edge_detected(self, port: int, bounce_time: int) -> None:
+        """Send signal that input edge is detected."""
+        await asyncio.sleep(float(bounce_time / 1000))
+        async_dispatcher_send(self.hass, f"port_{port}_edge_detected")
+
+    def setup_port(self, entry: ConfigEntry) -> None:
+        """Setup GPIO ports."""
+
+        @callback
+        def edge_detected(port: int) -> None:
+            """Edge detection handler."""
+            self.hass.add_job(
+                self.async_signal_edge_detected,
+                port,
+                entry.options.get(CONF_BOUNCETIME, DEFAULT_BOUNCETIME),
+            )
+
+        if entry.data[CONF_PLATFORM] == Platform.BINARY_SENSOR:
+            # Setup input
+            GPIO.setup(
+                int(entry.data[CONF_PORT]),
+                GPIO.IN,
+                int(entry.options.get(CONF_PULL_MODE, DEFAULT_PULL_MODE)),
+            )
+            # Add edge detection
+            GPIO.add_event_detect(
+                int(entry.data[CONF_PORT]),
+                GPIO.BOTH,
+                callback=edge_detected,
+                bouncetime=entry.options.get(CONF_BOUNCETIME, DEFAULT_BOUNCETIME),
+            )

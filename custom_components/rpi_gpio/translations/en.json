@@ -1,0 +1,36 @@
+{
+    "config": {
+        "step": {
+            "add_binary_sensor": {
+                "data": {
+                    "port": "Select port to set as binary sensor"
+                }
+            },
+            "user": {
+                "menu_options": {
+                    "add_binary_sensor": "Add Binary sensor",
+                    "add_cover": "Add Cover",
+                    "add_switch": "Add Switch",
+                    "remove": "Remove entity"
+                }
+            }
+        }
+    },
+    "issues": {
+        "deprecated_yaml": {
+            "description": "Configuring Raspberry Pi GPIO using YAML is being removed.\n\nYour existing YAML configuration has been imported into the UI automatically.\n\nRemove the Raspberry Pi GPIO YAML configuration from your configuration.yaml file and restart Home Assistant to fix this issue.",
+            "title": "The Raspberry Pi GPIO YAML configuration is being removed"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "bouncetime": "Port debounce time (milliseconds)",
+                    "invert_logic": "Invert port state (default is ACTIVE_HIGH)",
+                    "pull_mode": "Set internal pull resistor"
+                }
+            }
+        }
+    }
+}

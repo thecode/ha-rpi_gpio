@@ -1,10 +1,11 @@
 {
   "domain": "rpi_gpio",
   "name": "Raspberry Pi GPIO",
+  "config_flow": true,
   "documentation": "https://github.com/thecode/ha-rpi_gpio",
   "issue_tracker": "https://github.com/thecode/ha-rpi_gpio/issues",
   "requirements": ["RPi.GPIO==0.7.1"],
   "codeowners": ["@thecode"],
   "iot_class": "local_push",
-  "version": "2022.7.0"
+  "version": "2022.9.0"
 }

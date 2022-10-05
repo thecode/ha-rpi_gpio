@@ -3,8 +3,15 @@
         "step": {
             "add_binary_sensor": {
                 "data": {
+                    "name": "Name",
                     "port": "Select port to set as binary sensor"
                 }
+            },
+            "add_switch": {
+                "data": {
+                    "name": "Name",
+                    "port": "Select port to set as switch"
+              }
             },
             "user": {
                 "menu_options": {

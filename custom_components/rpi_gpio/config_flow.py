@@ -84,6 +84,15 @@ def _get_options_schema(platform: Platform, options: dict[str, Any]) -> vol.Sche
                 ),
             }
         )
+    if platform == Platform.SWITCH:
+        return vol.Schema(
+            {
+                vol.Optional(
+                    CONF_INVERT_LOGIC,
+                    default=options.get(CONF_INVERT_LOGIC, DEFAULT_INVERT_LOGIC),
+                ): selector.BooleanSelector()
+            }
+        )
 
 
 def _get_avaiable_ports(hass: HomeAssistant) -> list[selector.SelectOptionDict]:
@@ -114,14 +123,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle a flow initialized by the user."""
         return self.async_show_menu(
             step_id="user",
-            menu_options=["add_binary_sensor"],
+            menu_options=["add_binary_sensor", "add_switch"],
         )
 
     async def async_step_add_binary_sensor(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle adding a binary sensor entry."""
-
         if user_input is None:
 
             return self.async_show_form(
@@ -147,12 +155,40 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data={CONF_PLATFORM: Platform.BINARY_SENSOR, **user_input},
         )
 
+    async def async_step_add_switch(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle adding a switch."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="add_switch",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_NAME): selector.TextSelector(),
+                        vol.Required(CONF_PORT, default=[]): selector.SelectSelector(
+                            selector.SelectSelectorConfig(
+                                options=_get_avaiable_ports(self.hass),
+                                mode=selector.SelectSelectorMode.DROPDOWN,
+                            )
+                        ),
+                    }
+                ),
+            )
+
+        await self.async_set_unique_id(user_input[CONF_PORT])
+        self._abort_if_unique_id_configured()
+
+        return self.async_create_entry(
+            title=f"{user_input[CONF_NAME]} (GPIO {user_input[CONF_PORT]})",
+            data={CONF_PLATFORM: Platform.SWITCH, **user_input},
+        )
+
     @staticmethod
     @callback
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> RpiGPIOOptionsFlowHandler:
-        """Options callback for AccuWeather."""
+        """Options callback for Rpi GPIO."""
         return RpiGPIOOptionsFlowHandler(config_entry)
 
 

@@ -3,7 +3,14 @@
     "step": {
       "add_binary_sensor": {
         "data": {
+          "name": "[%key:common::config_flow::data::name%]",
           "port": "Select port to set as binary sensor"
+        }
+      },
+      "add_switch": {
+        "data": {
+          "name": "[%key:common::config_flow::data::name%]",
+          "port": "Select port to set as switch"
         }
       },
       "user": {

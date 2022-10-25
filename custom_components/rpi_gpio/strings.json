@@ -13,23 +13,36 @@
           "port": "Select port to set as switch"
         }
       },
+      "add_cover": {
+        "data": {
+          "name": "[%key:common::config_flow::data::name%]",
+          "relay_pin": "Select port to set as relay",
+          "state_pin": "Select port to set as state input"
+        }
+      },
       "user": {
         "menu_options": {
           "add_binary_sensor": "Add Binary sensor",
           "add_switch": "Add Switch",
-          "add_cover": "Add Cover",
-          "remove": "Remove entity"
+          "add_cover": "Add Cover"
         }
       }
+    },
+    "error": {
+      "not_unique": "Relay and state ports must be unique"
     }
   },
   "options": {
     "step": {
       "init": {
         "data": {
-          "bouncetime": "Port debounce time (milliseconds)",
+          "bouncetime": "Input port debounce time (milliseconds)",
           "invert_logic": "Invert port state (default is ACTIVE_HIGH)",
-          "pull_mode": "Set internal pull resistor"
+          "pull_mode": "Set internal pull resistor",
+          "state_pull_mode": "Set internal pull resistor",
+          "invert_state": "Invert input port state (default is ACTIVE_HIGH)",
+          "invert_relay": "Invert relay port state (default is ACTIVE_HIGH)",
+          "relay_time": "Set relay ON duration (seconds)"
         }
       }
     }

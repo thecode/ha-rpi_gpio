@@ -21,9 +21,14 @@ from .const import (
     CONF_CONFIGURED_PORTS,
     CONF_GPIO,
     CONF_INVERT_LOGIC,
+    CONF_INVERT_RELAY,
     CONF_PULL_MODE,
+    CONF_RELAY_PIN,
+    CONF_STATE_PIN,
+    CONF_STATE_PULL_MODE,
     DEFAULT_BOUNCETIME,
     DEFAULT_INVERT_LOGIC,
+    DEFAULT_INVERT_RELAY,
     DEFAULT_PULL_MODE,
     DOMAIN,
 )
@@ -49,8 +54,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setup(
         entry, entry.data[CONF_PLATFORM]
     )
-
-    hass.data[DOMAIN][CONF_CONFIGURED_PORTS].append(entry.data[CONF_PORT])
+    ports = (
+        [entry.data[CONF_RELAY_PIN], entry.data[CONF_STATE_PIN]]
+        if entry.data[CONF_PLATFORM] == Platform.COVER
+        else [entry.data[CONF_PORT]]
+    )
+    hass.data[DOMAIN][CONF_CONFIGURED_PORTS] += ports
 
     entry.async_on_unload(entry.add_update_listener(options_updated))
 
@@ -134,5 +143,27 @@ class RpiGPIO:
                 GPIO.OUT,
                 initial=GPIO.HIGH
                 if entry.options.get(CONF_INVERT_LOGIC, DEFAULT_INVERT_LOGIC)
+                else GPIO.LOW,
+            )
+        elif entry.data[CONF_PLATFORM] == Platform.COVER:
+            # Setup state pin
+            GPIO.setup(
+                int(entry.data[CONF_STATE_PIN]),
+                GPIO.IN,
+                int(entry.options.get(CONF_STATE_PULL_MODE, DEFAULT_PULL_MODE)),
+            )
+            # Add edge detection
+            GPIO.add_event_detect(
+                int(entry.data[CONF_STATE_PIN]),
+                GPIO.BOTH,
+                callback=edge_detected,
+                bouncetime=entry.options.get(CONF_BOUNCETIME, DEFAULT_BOUNCETIME),
+            )
+            # Setup relay pin
+            GPIO.setup(
+                int(entry.data[CONF_RELAY_PIN]),
+                GPIO.OUT,
+                initial=GPIO.HIGH
+                if entry.options.get(CONF_INVERT_RELAY, DEFAULT_INVERT_RELAY)
                 else GPIO.LOW,
             )

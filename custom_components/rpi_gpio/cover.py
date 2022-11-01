@@ -170,5 +170,6 @@ class RPiGPIOCover(CoverEntity):
     async def async_will_remove_from_hass(self) -> None:
         """Reset relay pin to input and remove from configured ports."""
         await self.rpi_gpio.async_reset_port(self.relay_pin)
+        await self.rpi_gpio.async_remove_edge_detection(self.state_pin)
         self.hass.data[DOMAIN][CONF_CONFIGURED_PORTS].remove(self.relay_pin)
         self.hass.data[DOMAIN][CONF_CONFIGURED_PORTS].remove(self.state_pin)

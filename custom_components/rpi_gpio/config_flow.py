@@ -108,13 +108,13 @@ def _get_options_schema(platform: Platform, options: dict[str, Any]) -> vol.Sche
             {
                 vol.Optional(
                     CONF_STATE_PULL_MODE,
-                    default=options.get(CONF_PULL_MODE, DEFAULT_PULL_MODE),
+                    default=options.get(CONF_STATE_PULL_MODE, DEFAULT_PULL_MODE),
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(options=PULL_MODES)
                 ),
                 vol.Optional(
                     CONF_INVERT_STATE,
-                    default=options.get(CONF_INVERT_LOGIC, DEFAULT_INVERT_STATE),
+                    default=options.get(CONF_INVERT_STATE, DEFAULT_INVERT_STATE),
                 ): selector.BooleanSelector(),
                 vol.Optional(
                     CONF_BOUNCETIME,
@@ -131,7 +131,7 @@ def _get_options_schema(platform: Platform, options: dict[str, Any]) -> vol.Sche
                 ),
                 vol.Optional(
                     CONF_RELAY_TIME,
-                    default=options.get(CONF_INVERT_LOGIC, DEFAULT_RELAY_TIME),
+                    default=options.get(CONF_RELAY_TIME, DEFAULT_RELAY_TIME),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=0.1,
@@ -142,7 +142,7 @@ def _get_options_schema(platform: Platform, options: dict[str, Any]) -> vol.Sche
                 ),
                 vol.Optional(
                     CONF_INVERT_RELAY,
-                    default=options.get(CONF_INVERT_LOGIC, DEFAULT_INVERT_RELAY),
+                    default=options.get(CONF_INVERT_RELAY, DEFAULT_INVERT_RELAY),
                 ): selector.BooleanSelector(),
             }
         )

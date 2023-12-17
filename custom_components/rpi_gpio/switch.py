@@ -97,8 +97,7 @@ class RPiGPIOSwitch(SwitchEntity):
         self._port = port
         self._invert_logic = invert_logic
         self._state = False
-        setup_output(self._port)
-        write_output(self._port, 1 if self._invert_logic else 0)
+        setup_output(self._port, self._invert_logic) 
 
     @property
     def is_on(self):

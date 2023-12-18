@@ -33,7 +33,7 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
         global gpiod_config, gpiod_lines
         gpiod_config.clear()
         if gpiod_lines:
-            gpiod_lines.close()
+            gpiod_lines.release()
 
     def prepare_gpio(event):
         """Stuff to do when Home Assistant starts."""
@@ -42,21 +42,32 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.bus.listen_once(EVENT_HOMEASSISTANT_START, prepare_gpio)
     return True
 
+def device_name():
+    for id in range(5):
+        device_name = f"/dev/gpiochip{id}"
+        is_device = gpiod.is_gpiochip_device(device_name)
+        if is_device:
+            with gpiod.Chip(device_name) as chip:
+                info = chip.get_info()
+                if "pinctrl" in info.label:
+                    return device_name
+
 def update_gpiod_lines():
     global gpiod_config, gpiod_lines
-
+    
     if gpiod_lines:
-        gpiod_lines.__exit__()
+        gpiod_lines.__exit__(None,None,None)
 
     gpiod_lines = gpiod.request_lines(
-        "/dev/gpiochip0",
+        device_name(),
         consumer="ha-rpi_gpio",
         config=gpiod_config)
 
-def setup_output(port):
+def setup_output(port, invert_logic):
     """Set up a GPIO as output."""
     global gpiod_config
     gpiod_config[port].direction = gpiod.line.Direction.OUTPUT
+    gpiod_config[port].output_value = gpiod.line.Value.ACTIVE if invert_logic else gpiod.line.Value.INACTIVE
 
     update_gpiod_lines()
 

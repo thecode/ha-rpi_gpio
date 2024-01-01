@@ -1,6 +1,7 @@
 """Support for controlling GPIO pins of a Raspberry Pi."""
 
 from collections import defaultdict
+from datetime import timedelta
 
 import gpiod
 import time
@@ -89,6 +90,14 @@ def read_input(port):
     global gpiod_lines
     return gpiod_lines.get_value(port) == gpiod.line.Value.ACTIVE
 
-def edge_detect(port, event_callback, bounce):
+def edge_detect(port, bounce):
     """Add detection for RISING and FALLING events."""
-    # TODO
+    global gpiod_config
+    global gpiod_lines
+
+    gpiod_config[port].edge_detection = gpiod.line.Edge.BOTH
+    gpiod_config[port].bias = gpiod.line.Bias.PULL_UP
+    gpiod_config[port].debounce_period = timedelta(milliseconds=bounce)
+    gpiod_config[port].event_clock = gpiod.line.Clock.REALTIME
+    
+    return gpiod_lines.wait_edge_events(timedelta(milliseconds=500))

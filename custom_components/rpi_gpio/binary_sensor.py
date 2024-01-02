@@ -119,8 +119,7 @@ class RPiGPIOBinarySensor(BinarySensorEntity):
         self.async_on_remove(timer_cancel)
 
     async def update_gpio(self, _):
-        event = edge_detect(self._port, self._bouncetime)
-        if event is True:
+        if edge_detect(self._port, self._bouncetime) is True:
             self._state = read_input(self._port)
         self.async_write_ha_state()
 

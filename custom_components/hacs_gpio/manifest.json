@@ -1,0 +1,12 @@
+{
+  "domain": "ha-gpiod",
+  "name": "HA GPIOD",
+  "codeowners": [
+    "@jdeneef"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/jdeneef/ha-gpiod",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/jdeneef/ha-gpiod/issues",
+  "version": "0.0.1"
+}

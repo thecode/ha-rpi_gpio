@@ -1,0 +1,11 @@
+hacs_gpiod:
+  gpio_device_path: /dev/gpiochip0
+  switches:
+    - name: Switch red 1
+      gpio_pin: 4
+    - name: Switch red 2
+      gpio_pin: 22
+  binary_sensors:
+    - name: button
+      gpio_pin: 7
+

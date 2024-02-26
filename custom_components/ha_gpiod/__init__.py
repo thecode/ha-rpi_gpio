@@ -8,7 +8,7 @@ import homeassistant.helpers.config_validation as cv
 
 import gpiod
 
-DOMAIN = "hacs_gpiod"
+DOMAIN = "ha_gpiod"
 CONF_GPIO_DEVICE_PATH = "gpio_device_path"
 CONF_SWITCHES = "switches"
 CONF_BINARY_SENSORS = "binary_sensors"

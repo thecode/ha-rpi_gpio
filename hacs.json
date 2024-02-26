@@ -1,5 +1,5 @@
 {
-  "name": "HACS_GPIOD",
+  "name": "HA_GPIOD",
   "homeassistant": "2022.7.0",
   "render_readme": true
 }

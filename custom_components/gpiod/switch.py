@@ -5,14 +5,13 @@ from . import DOMAIN
 import logging
 _LOGGER = logging.getLogger(__name__)
 
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
-from homeassistant.const import CONF_NAME, CONF_PORT, CONF_UNIQUE_ID
+from homeassistant.const import CONF_SWITCHES, CONF_NAME, CONF_PORT, CONF_UNIQUE_ID
 CONF_INVERT_LOGIC="invert_logic"
+DEFAULT_INVERT_LOGIC = False
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -20,12 +19,12 @@ import voluptuous as vol
 PLATFORM_SCHEMA = vol.All(
     PLATFORM_SCHEMA.extend(
         {
-            vol.Exclusive("switches", "switches"): vol.All(
+            vol.Exclusive(CONF_SWITCHES, CONF_SWITCHES): vol.All(
                 cv.ensure_list, [{
                     vol.Required(CONF_NAME): cv.string,
                     vol.Required(CONF_PORT): cv.positive_int,
                     vol.Optional(CONF_UNIQUE_ID): cv.string,
-                    vol.Optional(CONF_INVERT_LOGIC, default=False): cv.boolean
+                    vol.Optional(CONF_INVERT_LOGIC, default=DEFAULT_INVERT_LOGIC): cv.boolean
                 }]
             )
         }
@@ -39,12 +38,13 @@ def setup_platform(
     add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None) -> None:
     
-    _LOGGER.debug(f"@start of setup_platform {config}")
+    _LOGGER.debug(f"setup_platform: {config}")
     hub = hass.data[DOMAIN]
 
     switches = []
-    for switch in config.get("switches"):
-        switches.append(GPIODSwitch(
+    for switch in config.get(CONF_SWITCHES):
+        switches.append(
+            GPIODSwitch(
                 hub,
                 switch[CONF_NAME],
                 switch[CONF_PORT],
@@ -58,15 +58,15 @@ def setup_platform(
 
 class GPIODSwitch(SwitchEntity):
     def __init__(self, hub, name, port, unique_id, invert_logic):
-        _LOGGER.debug(f"in GPIODSwitch __init__ {name} {port} {unique_id}")
+        _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id}")
         self._hub = hub
         self._attr_name = name
         self._port = port
         self._attr_unique_id = unique_id
         self._invert_logic = invert_logic
         self._attr_should_poll = False
-        self._state = False
-        hub.add_switch(port)
+        self._state = False != invert_logic
+        hub.add_switch(port, invert_logic)
 
     @property
     def name(self) -> str:
@@ -85,18 +85,13 @@ class GPIODSwitch(SwitchEntity):
         return self._state
 
     def turn_on(self, **kwargs):
-        if self._invert_logic:
-            self._hub.turn_off(self._port)
-        else:
-            self._hub.turn_on(self._port)
-        self._state = True != self._invert_logic
+        self._hub.turn_on(self._port)
+        self._state = True
         self.schedule_update_ha_state()
 
+
     def turn_off(self, **kwargs):
-        if self._invert_logic:
-            self._hub.turn_on(self._port)
-        else:
-            self._hub.turn_off(self._port)
-        self._state = False != self._invert_logic
+        self._hub.turn_off(self._port)
+        self._state = False
         self.schedule_update_ha_state()
 

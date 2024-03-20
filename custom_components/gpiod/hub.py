@@ -8,13 +8,14 @@ _LOGGER = logging.getLogger(__name__)
 from homeassistant.core import HomeAssistant
 
 from collections import defaultdict
+from datetime import timedelta
 import gpiod
 
-from gpiod.line import Direction, Value, Bias
+from gpiod.line import Direction, Value, Bias, Edge, Clock
 
 class Hub:
 
-    manufacturer = DOMAIN
+    manufacturer = "ha_gpiod"
 
     def __init__(self, hass: HomeAssistant, path: str) -> None:
         """GPIOD Hub"""
@@ -28,6 +29,7 @@ class Hub:
         self._config = defaultdict(gpiod.LineSettings)
         self._lines = None
         self._online = False
+        self._edge_events = False
 
         if not gpiod.is_gpiochip_device(path):
             _LOGGER.debug(f"initilization failed: {path} not a gpiochip_device")
@@ -71,14 +73,20 @@ class Hub:
         _LOGGER.debug(f"updating lines: {self._config}")
         self._lines = gpiod.request_lines(
             self._path,
-            consumer = "ha_gpiod",
+            consumer = self.manufacturer,
             config = self._config
         )
 
-    def add_switch(self, port) -> None:
+        if self._edge_events:
+            # stop if running and start new edge events listener
+            _LOGGER.debug(f"wait for edge events {self._edge_events}")
+
+
+    def add_switch(self, port, invert_logic) -> None:
         _LOGGER.debug(f"in add_switch {port}")
         self._config[port].direction = Direction.OUTPUT
         self._config[port].output_value = Value.INACTIVE
+        self._config[port].active_low = invert_logic
         self.update_lines()
 
     def turn_on(self, port) -> None:
@@ -88,3 +96,18 @@ class Hub:
     def turn_off(self, port) -> None:
         _LOGGER.debug(f"in turn_off")
         self._lines.set_value(port, Value.INACTIVE)
+
+    def add_sensor(self, port, invert_logic, pull_mode, debounce) -> None:
+        _LOGGER.debug(f"in add_sensor {port}")
+        self._config[port].direction = Direction.INPUT
+        self._config[port].active_low = invert_logic
+        self._config[port].bias = Bias.PULL_DOWN if pull_mode == "DOWN" else Bias.PULL_UP
+        self._config[port].debounce_period = timedelta(milliseconds=debounce)
+        self._config[port].edge_detection = Edge.BOTH
+        self._config[port].event_clock = Clock.REALTIME
+        self._edge_events = True
+        self.update_lines()
+
+
+    def update(self, **kwargs):
+        return self._lines.get_value(port) == Value.ACTIVE

@@ -1,6 +1,6 @@
 {
-  "domain": "ha_gpiod",
-  "name": "HA GPIOD",
+  "domain": "gpiod",
+  "name": "GPIOD",
   "codeowners": [ "@jdeneef" ],
   "documentation": "https://github.com/jdeneef/ha_gpiod",
   "iot_class": "local_push",

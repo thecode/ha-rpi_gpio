@@ -1,6 +1,6 @@
 # HomeAssistant HACS custom RPI GPIO integration
 
-This HACS integration is used to address GPIO (especially and only tested for RaspberryPi) using libgpiod and python gpiod >=v2
+This HACS integration is used to address GPIO (especially and only tested for RaspberryPi) using libgpiod and python gpiod >=v2.02
 
 **This is very very early stuff, don't use in your setup in any way**
 

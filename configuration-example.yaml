@@ -1,14 +1,44 @@
-ha_gpiod:
-  gpio_device_path: /dev/gpiochip0
-  switches:
-    - name: Switch red 1
-      port: 4
-      unique_id: switch_red_1
-    - name: Switch red 2
-      port: 22
-  binary_sensors:
-    - name: button
-      port: 7
-      bounce: 250
-      bias: "UP"
+# Berryclip gpio numbering
+# LED 1  - Pin 7  - GPIO4
+# LED 2  - Pin 11 - GPIO17
+# LED 3  - Pin 15 - GPIO22
+# LED 4  - Pin 19 - GPIO10
+# LED 5  - Pin 21 - GPIO9
+# LED 6  - Pin 23 - GPIO11
+# Buzzer - Pin 24 - GPIO8
+# Switch - Pin 26 - GPIO7
 
+gpiod:
+  path: /dev/gpiochip0
+
+switch:
+  - platform: gpiod
+    switches:
+      - port: 4
+        name: "Led 1"
+        unique_id: "gpio_led_red_1"
+      - port: 17
+        name: "Led 2"
+        unique_id: "gpio_led_red_2"
+      - port: 22
+        name: "Led 3"
+        unique_id: "gpio_led_yellow_1"
+      - port: 10
+        name: "Led 4"
+        unique_id: "gpio_led_yellow_2"
+      - port: 9
+        name: "Led 5"
+        unique_id: "gpio_led_green_1"
+      - port: 11
+        name: "Led 6"
+        unique_id: "gpio_led_green_2"
+      - port: 8
+        name: "Buzzer"
+        unique_id: "gpio_buzzer"
+
+binary_sensor:
+  platform: gpiod
+  binary_sensors:
+    - port: 7
+      name: "Button"
+      unique_id: "gpio_button"

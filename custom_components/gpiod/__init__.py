@@ -36,11 +36,9 @@ CONFIG_SCHEMA = vol.Schema(
 def setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the GPIO component."""
     path = config.get(DOMAIN, {}).get(CONF_PATH) or "/dev/gpiochip0" # last part for backwards compatibility
-    _LOGGER.debug(f"Initializing {path}")
-
     hub = Hub(hass, path)
     hass.data[DOMAIN] = hub
-    _LOGGER.debug(f"data: {hass.data[DOMAIN]}")
+    # _LOGGER.debug(f"data: {hass.data[DOMAIN]}")
 
     def cleanup_gpio(event):
         """Stuff to do before stopping."""

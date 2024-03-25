@@ -33,12 +33,11 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA
 )
 
-def setup(hass: HomeAssistant, config: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the GPIO component."""
     path = config.get(DOMAIN, {}).get(CONF_PATH) or "/dev/gpiochip0" # last part for backwards compatibility
     hub = Hub(hass, path)
     hass.data[DOMAIN] = hub
-    # _LOGGER.debug(f"data: {hass.data[DOMAIN]}")
 
     def cleanup_gpio(event):
         """Stuff to do before stopping."""
@@ -46,7 +45,7 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
         hub.cleanup()
 
     # cleanup at shutdown of hass
-    hass.bus.listen_once(EVENT_HOMEASSISTANT_STOP, cleanup_gpio)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, cleanup_gpio)
 
     return True
 

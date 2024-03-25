@@ -32,10 +32,10 @@ PLATFORM_SCHEMA = vol.All(
 )
 
 
-def setup_platform(
+async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    add_entities: AddEntitiesCallback,
+    async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None) -> None:
     
     _LOGGER.debug(f"setup_platform: {config}")
@@ -53,7 +53,7 @@ def setup_platform(
             )
         )
 
-    add_entities(switches)
+    async_add_entities(switches)
 
 
 class GPIODSwitch(SwitchEntity):
@@ -66,7 +66,7 @@ class GPIODSwitch(SwitchEntity):
         self._invert_logic = invert_logic
         self._attr_should_poll = False
         self._state = False != invert_logic
-        hub.add_switch(port, invert_logic)
+        hub.add_switch(self, port, invert_logic)
 
     @property
     def name(self) -> str:

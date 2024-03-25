@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from . import DOMAIN
+import asyncio
+import threading
+from time import sleep
+LISTENER_WINDOW = 5
 
 import logging
 _LOGGER = logging.getLogger(__name__)
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 
 from collections import defaultdict
 from datetime import timedelta
@@ -29,7 +33,9 @@ class Hub:
         self._config = defaultdict(gpiod.LineSettings)
         self._lines = None
         self._online = False
-        self._edge_events = False
+        self._listening = False
+        self._listener = None
+        self._entities = {}
 
         if not gpiod.is_gpiochip_device(path):
             _LOGGER.debug(f"initilization failed: {path} not a gpiochip_device")
@@ -55,6 +61,9 @@ class Hub:
 
     def cleanup(self) -> None:
         _LOGGER.debug("hub.cleanup")
+        self._listening = False
+        # wait for loop time, give wait_edge_eventns time to timeout
+        sleep(LISTENER_WINDOW)
         if self._config:
             self._config.clear()
         if self._lines:
@@ -62,7 +71,6 @@ class Hub:
         self._online = False
 
     def update_lines(self) -> None:
-
         if not self._online:
             _LOGGER.debug(f"gpiod hub not online {self._path}")
         if not self._config:
@@ -77,13 +85,34 @@ class Hub:
             config = self._config
         )
 
-        if self._edge_events:
-            # stop if running and start new edge events listener
-            _LOGGER.debug(f"wait for edge events {self._edge_events}")
+    def edge_detect(self):
+        _LOGGER.debug("in hub.edge_detect")
+        # listener already active
+        if self._listener:
+            return
+        self._listener = threading.Thread(target=self.listener,daemon=True).start()
+        # self._listener = self._hass.create_task(self.listen())
+        # self._listener = asyncio.create_task(self.listen())
+        # self._listener = hass.async_create_background_task(self.listen(), "listener_task_gpiod")
+        # _LOGGER.debug(f"listener: {self._listener}")
 
+    def listener(self):
+        self._listening = True
+        # wait some time to allow other entities to register
+        sleep(10)
+        while self._listening:
+            if self._lines.wait_edge_events(timedelta(seconds=LISTENER_WINDOW)):
+                events = self._lines.read_edge_events()
+                for event in events:
+                    _LOGGER.debug(f"Event: {event}")
+                    self._entities[event.line_offset].update()
+            else:
+                _LOGGER.debug(f"no event, rewhile: {self._listening}")
+        _LOGGER.debug("listener stopped")
 
-    def add_switch(self, port, invert_logic) -> None:
+    def add_switch(self, entity, port, invert_logic) -> None:
         _LOGGER.debug(f"in add_switch {port}")
+        self._entities[port] = entity
         self._config[port].direction = Direction.OUTPUT
         self._config[port].output_value = Value.INACTIVE
         self._config[port].active_low = invert_logic
@@ -97,17 +126,16 @@ class Hub:
         _LOGGER.debug(f"in turn_off")
         self._lines.set_value(port, Value.INACTIVE)
 
-    def add_sensor(self, port, invert_logic, pull_mode, debounce) -> None:
+    def add_sensor(self, entity, port, invert_logic, pull_mode, debounce) -> None:
         _LOGGER.debug(f"in add_sensor {port}")
+        self._entities[port] = entity
         self._config[port].direction = Direction.INPUT
         self._config[port].active_low = invert_logic
         self._config[port].bias = Bias.PULL_DOWN if pull_mode == "DOWN" else Bias.PULL_UP
         self._config[port].debounce_period = timedelta(milliseconds=debounce)
         self._config[port].edge_detection = Edge.BOTH
         self._config[port].event_clock = Clock.REALTIME
-        self._edge_events = True
         self.update_lines()
 
-
-    def update(self, **kwargs):
+    def update(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE

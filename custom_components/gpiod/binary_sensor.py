@@ -6,7 +6,6 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,10 +39,10 @@ PLATFORM_SCHEMA = vol.All(
 )
 
 
-def setup_platform(
+async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    add_entities: AddEntitiesCallback,
+    async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None) -> None:
     
     _LOGGER.debug(f"setup_platform: {config}")
@@ -63,7 +62,8 @@ def setup_platform(
             )
         )
 
-    add_entities(sensors)
+    async_add_entities(sensors)
+    hub.edge_detect()
 
 
 class GPIODBinarySensor(BinarySensorEntity):
@@ -78,7 +78,7 @@ class GPIODBinarySensor(BinarySensorEntity):
         self._debounce = debounce
         self._attr_should_poll = False
         self._state = False != invert_logic
-        hub.add_sensor(port, invert_logic, pull_mode, debounce)
+        hub.add_sensor(self, port, invert_logic, pull_mode, debounce)
 
     @property
     def name(self) -> str:
@@ -97,5 +97,6 @@ class GPIODBinarySensor(BinarySensorEntity):
         return self._state
 
     def update(self):
-        self._state = self.hub.update(self._port)
+        self._state = self._hub.update(self._port)
+        self.schedule_update_ha_state(False)
 

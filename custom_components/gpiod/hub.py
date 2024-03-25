@@ -3,6 +3,8 @@ from __future__ import annotations
 from . import DOMAIN
 import asyncio
 import threading
+from time import sleep
+LISTENER_LOOP=1
 
 import logging
 _LOGGER = logging.getLogger(__name__)
@@ -52,10 +54,6 @@ class Hub:
         else:
             _LOGGER.warning(f"initialization failed: {path}")
 
-        # self._listener = self._hass.create_task(self.listen())
-        # self._listener = asyncio.create_task(self.listen())
-        # self._listener = hass.async_create_background_task(self.listen(), "listener_task_gpiod")
-        # _LOGGER.debug(f"listener: {self._listener}")
 
     @property
     def hub_id(self) -> str:
@@ -65,6 +63,8 @@ class Hub:
     def cleanup(self) -> None:
         _LOGGER.debug("hub.cleanup")
         self._listening = False
+        # wait for loop time, give wait_edge_eventns time to timeout
+        sleep(LISTENER_LOOP)
         if self._config:
             self._config.clear()
         if self._lines:
@@ -91,16 +91,22 @@ class Hub:
         if not self._edge_events:
             return
         self._listener = threading.Thread(target=self.listener,daemon=True).start()
+        # self._listener = self._hass.create_task(self.listen())
+        # self._listener = asyncio.create_task(self.listen())
+        # self._listener = hass.async_create_background_task(self.listen(), "listener_task_gpiod")
+        # _LOGGER.debug(f"listener: {self._listener}")
 
     def listener(self):
         self._listening = True
+        # wait some time to allow other entities to startup
+        sleep(5)
         while self._listening:
-            if self._lines.wait_edge_events(timedelta(seconds=1)):
+            if self._lines.wait_edge_events(timedelta(seconds=LISTENER_LOOP)):
                 events = self._lines.read_edge_events()
                 for event in events:
                     _LOGGER.debug(f"Event: {event}")
             else:
-                _LOGGER.debug("restart waiting for event")
+                _LOGGER.debug(f"no event, rewhile: {self._listening}")
         _LOGGER.debug("listener stopped")
 
     def add_switch(self, entity, port, invert_logic) -> None:

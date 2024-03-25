@@ -1,10 +1,8 @@
-# HomeAssistant HACS custom RPI GPIO integration
+# HomeAssistant HACS custom RPI GPIOD integration
 
 This HACS integration is used to address GPIO (especially and only tested for RaspberryPi) using libgpiod and python gpiod >=v2.02
 
 **This is very very early stuff, don't use in your setup in any way**
-
-[python gpiod examples](https://github.com/brgl/libgpiod/tree/master/bindings/python/examples)
 
 
 ## Sample config for the raspberry pi berryclip hat
@@ -12,27 +10,34 @@ This HACS integration is used to address GPIO (especially and only tested for Ra
 Aiming for config_flow configuration, but nevertheless:
 
 ```yaml
-ha-gpiod:
-  chip: '/dev/gpiochip0'
-  switches:
-    - name: "Led 1 red"
-      line_offset: 4
-    - name: "Led 2 red"
-      line_offset: 17
-    - name: "Led 3 yellow"
-      line_offset: 22
-    - name: "Led 4 yellow"
-      line_offset: 10
-    - name: "Led 5 green"
-      line_offset: 9
-    - name: "Led 6 green"
-      line_offset: 11
-    - name: "Buzzer"
-      line_offset: 8
-  buttons:
+gpiod:
+  path: '/dev/gpiochip0'
+
+switch:
+  - platform: gpiod
+    switches:
+      - name: "Led 1 red"
+        port: 4
+      - name: "Led 2 red"
+        port: 17
+        unique_id: "gpio_led_red_2"
+      - name: "Led 3 yellow"
+        port: 22
+        invert_logic: true
+      - name: "Led 4 yellow"
+        port: 10
+      - name: "Led 5 green"
+        port: 9
+      - name: "Led 6 green"
+        port: 11
+      - name: "Buzzer"
+        port: 8
+
+binary_sensor:
+  - platform: gpiod
+    sensors:
     - name: "Button"
-      line_offset: 7
-  invert_logic: false
+      port: 7
 ```
 
 ## Add Debug info
@@ -40,5 +45,7 @@ ha-gpiod:
 logger:
   default: info
   logs:
-    custom_components.ha-gpiod: debug
+    custom_components.gpiod: debug
 ```
+
+

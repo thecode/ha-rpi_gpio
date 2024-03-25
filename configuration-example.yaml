@@ -16,29 +16,21 @@ switch:
     switches:
       - port: 4
         name: "Led 1"
-        unique_id: "gpio_led_red_1"
       - port: 17
         name: "Led 2"
-        unique_id: "gpio_led_red_2"
       - port: 22
         name: "Led 3"
-        unique_id: "gpio_led_yellow_1"
       - port: 10
         name: "Led 4"
-        unique_id: "gpio_led_yellow_2"
       - port: 9
         name: "Led 5"
-        unique_id: "gpio_led_green_1"
       - port: 11
         name: "Led 6"
-        unique_id: "gpio_led_green_2"
       - port: 8
         name: "Buzzer"
-        unique_id: "gpio_buzzer"
 
 binary_sensor:
   platform: gpiod
   binary_sensors:
     - port: 7
       name: "Button"
-      unique_id: "gpio_button"

@@ -97,6 +97,6 @@ class GPIODBinarySensor(BinarySensorEntity):
         return self._state
 
     def update(self):
-        self._state = self.hub.update(self._port)
+        self._state = self._hub.update(self._port)
         self.schedule_update_ha_state(False)
 

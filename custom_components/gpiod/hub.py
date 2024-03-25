@@ -4,7 +4,7 @@ from . import DOMAIN
 import asyncio
 import threading
 from time import sleep
-LISTENER_LOOP=1
+LISTENER_WINDOW = 5
 
 import logging
 _LOGGER = logging.getLogger(__name__)
@@ -33,7 +33,6 @@ class Hub:
         self._config = defaultdict(gpiod.LineSettings)
         self._lines = None
         self._online = False
-        self._edge_events = False
         self._listening = False
         self._listener = None
         self._entities = {}
@@ -64,7 +63,7 @@ class Hub:
         _LOGGER.debug("hub.cleanup")
         self._listening = False
         # wait for loop time, give wait_edge_eventns time to timeout
-        sleep(LISTENER_LOOP)
+        sleep(LISTENER_WINDOW)
         if self._config:
             self._config.clear()
         if self._lines:
@@ -88,7 +87,8 @@ class Hub:
 
     def edge_detect(self):
         _LOGGER.debug("in hub.edge_detect")
-        if not self._edge_events:
+        # listener already active
+        if self._listener:
             return
         self._listener = threading.Thread(target=self.listener,daemon=True).start()
         # self._listener = self._hass.create_task(self.listen())
@@ -98,13 +98,14 @@ class Hub:
 
     def listener(self):
         self._listening = True
-        # wait some time to allow other entities to startup
-        sleep(5)
+        # wait some time to allow other entities to register
+        sleep(10)
         while self._listening:
-            if self._lines.wait_edge_events(timedelta(seconds=LISTENER_LOOP)):
+            if self._lines.wait_edge_events(timedelta(seconds=LISTENER_WINDOW)):
                 events = self._lines.read_edge_events()
                 for event in events:
                     _LOGGER.debug(f"Event: {event}")
+                    self._entities[event.line_offset].update()
             else:
                 _LOGGER.debug(f"no event, rewhile: {self._listening}")
         _LOGGER.debug("listener stopped")
@@ -134,8 +135,7 @@ class Hub:
         self._config[port].debounce_period = timedelta(milliseconds=debounce)
         self._config[port].edge_detection = Edge.BOTH
         self._config[port].event_clock = Clock.REALTIME
-        self._edge_events = True
         self.update_lines()
 
-    def update(self, **kwargs):
+    def update(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE

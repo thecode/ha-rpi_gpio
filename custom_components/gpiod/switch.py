@@ -57,6 +57,8 @@ async def async_setup_platform(
 
 
 class GPIODSwitch(SwitchEntity):
+    should_poll = False
+
     def __init__(self, hub, name, port, unique_id, invert_logic):
         _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id}")
         self._hub = hub
@@ -64,8 +66,7 @@ class GPIODSwitch(SwitchEntity):
         self._port = port
         self._attr_unique_id = unique_id
         self._invert_logic = invert_logic
-        self._attr_should_poll = False
-        self._state = False != invert_logic
+        self._is_on = False != invert_logic
         hub.add_switch(self, port, invert_logic)
 
     @property
@@ -77,21 +78,16 @@ class GPIODSwitch(SwitchEntity):
         return self._attr_unique_id
 
     @property
-    def state(self):
-        return self._state
-
-    @property
     def is_on(self): 
-        return self._state
+        return self._is_on
 
     def turn_on(self, **kwargs):
         self._hub.turn_on(self._port)
-        self._state = True
+        self._is_on = True
         self.schedule_update_ha_state()
-
 
     def turn_off(self, **kwargs):
         self._hub.turn_off(self._port)
-        self._state = False
+        self._is_on = False
         self.schedule_update_ha_state()
 

@@ -16,6 +16,7 @@ from datetime import timedelta
 import gpiod
 
 from gpiod.line import Direction, Value, Bias, Edge, Clock
+EventType = gpiod.EdgeEvent.Type
 
 class Hub:
 
@@ -105,7 +106,10 @@ class Hub:
                 events = self._lines.read_edge_events()
                 for event in events:
                     _LOGGER.debug(f"Event: {event}")
-                    self._entities[event.line_offset].update()
+                    # self._entities[event.line_offset].update()
+                    self._entities[event.line_offset].set(
+                        True if event.event_type == EventType.RISING_EDGE else False
+                    )
             else:
                 _LOGGER.debug(f"no event, rewhile: {self._listening}")
         _LOGGER.debug("listener stopped")

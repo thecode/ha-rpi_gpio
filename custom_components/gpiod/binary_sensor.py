@@ -67,6 +67,8 @@ async def async_setup_platform(
 
 
 class GPIODBinarySensor(BinarySensorEntity):
+    should_poll = False
+
     def __init__(self, hub, name, port, unique_id, invert_logic, pull_mode, debounce):
         _LOGGER.debug(f"GPIODBinarySensor init: {port} - {name} - {unique_id}")
         self._hub = hub
@@ -76,8 +78,7 @@ class GPIODBinarySensor(BinarySensorEntity):
         self._invert_logic = invert_logic
         self._pull_mode = pull_mode
         self._debounce = debounce
-        self._attr_should_poll = False
-        self._state = False != invert_logic
+        self._is_on = False != invert_logic
         hub.add_sensor(self, port, invert_logic, pull_mode, debounce)
 
     @property
@@ -89,14 +90,14 @@ class GPIODBinarySensor(BinarySensorEntity):
         return self._attr_unique_id
 
     @property
-    def state(self):
-        return self._state
-
-    @property
     def is_on(self): 
-        return self._state
+        return self._is_on
 
     def update(self):
-        self._state = self._hub.update(self._port)
+        self._is_on = self._hub.update(self._port)
+        self.schedule_update_ha_state(False)
+
+    def set(self, is_on: bool):
+        self._is_on = is_on
         self.schedule_update_ha_state(False)
 

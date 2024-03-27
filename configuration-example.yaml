@@ -15,17 +15,17 @@ switch:
   - platform: gpiod
     switches:
       - port: 4
-        name: "Led 1"
+        name: "Led 1 Red"
       - port: 17
-        name: "Led 2"
+        name: "Led 2 Red"
       - port: 22
-        name: "Led 3"
+        name: "Led 3 Yellow"
       - port: 10
-        name: "Led 4"
+        name: "Led 4 Yellow"
       - port: 9
-        name: "Led 5"
+        name: "Led 5 Green"
       - port: 11
-        name: "Led 6"
+        name: "Led 6 Green"
       - port: 8
         name: "Buzzer"
 

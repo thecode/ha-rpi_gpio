@@ -48,7 +48,7 @@ async def async_setup_platform(
                 hub,
                 switch[CONF_NAME],
                 switch[CONF_PORT],
-                switch.get(CONF_UNIQUE_ID) or f"gpio_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
+                switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
                 switch.get(CONF_INVERT_LOGIC)
             )
         )

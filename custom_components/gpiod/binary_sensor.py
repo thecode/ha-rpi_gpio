@@ -55,7 +55,7 @@ async def async_setup_platform(
                 hub,
                 sensor[CONF_NAME],
                 sensor[CONF_PORT],
-                sensor.get(CONF_UNIQUE_ID) or f"gpio_{sensor[CONF_PORT]}_{sensor[CONF_NAME].lower().replace(' ', '_')}",
+                sensor.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{sensor[CONF_PORT]}_{sensor[CONF_NAME].lower().replace(' ', '_')}",
                 sensor.get(CONF_INVERT_LOGIC),
                 sensor.get(CONF_PULL_MODE),
                 sensor.get(CONF_DEBOUNCE)

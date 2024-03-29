@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from . import DOMAIN
 import asyncio
-import threading
 from time import sleep
 LISTENER_WINDOW = 5
 
 import logging
 _LOGGER = logging.getLogger(__name__)
 
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 
 from collections import defaultdict
 from datetime import timedelta
@@ -87,31 +86,30 @@ class Hub:
         )
 
     def edge_detect(self):
-        _LOGGER.debug("in hub.edge_detect")
-        # listener already active
-        if self._listener:
+        _LOGGER.debug("edge_detect listener startup")
+        # already listening?
+        if self._listening:
             return
-        self._listener = threading.Thread(target=self.listener,daemon=True).start()
-        # self._listener = self._hass.create_task(self.listen())
-        # self._listener = asyncio.create_task(self.listen())
-        # self._listener = hass.async_create_background_task(self.listen(), "listener_task_gpiod")
-        # _LOGGER.debug(f"listener: {self._listener}")
-
-    def listener(self):
         self._listening = True
+        self._hass.loop.create_task(self.listen())
+
+    async def listen(self):
         # wait some time to allow other entities to register
-        sleep(10)
+        await asyncio.sleep(10)
         while self._listening:
-            if self._lines.wait_edge_events(timedelta(seconds=LISTENER_WINDOW)):
-                events = self._lines.read_edge_events()
+            events_available = await self._hass.async_add_executor_job(
+                self._lines.wait_edge_events,timedelta(seconds=LISTENER_WINDOW))
+            if events_available:
+                events = await self._hass.async_add_executor_job(
+                    self._lines.read_edge_events)
                 for event in events:
                     _LOGGER.debug(f"Event: {event}")
-                    # self._entities[event.line_offset].update()
                     self._entities[event.line_offset].set(
-                        True if event.event_type == EventType.RISING_EDGE else False
+                       True if event.event_type == EventType.RISING_EDGE else False
                     )
             else:
-                _LOGGER.debug(f"no event, rewhile: {self._listening}")
+                _LOGGER.debug(f"no event, looping: {self._listening}")
+        # return if no longer listening
         _LOGGER.debug("listener stopped")
 
     def add_switch(self, entity, port, invert_logic) -> None:

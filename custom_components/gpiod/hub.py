@@ -114,6 +114,8 @@ class Hub:
         _LOGGER.debug("listener stopped")
 
     async def listen(self):
+        if self._listening:
+            return
         self._listening = True
         # wait some time to allow other entities to register
         await asyncio.sleep(10)
@@ -121,7 +123,8 @@ class Hub:
             events_available = await self._hass.async_add_executor_job(
                 self._lines.wait_edge_events,timedelta(seconds=LISTENER_WINDOW))
             if events_available:
-                events = await self._hass.async_add_executor_job(self._lines.read_edge_events())
+                events = await self._hass.async_add_executor_job(
+                    self._lines.read_edge_events)
                 for event in events:
                     _LOGGER.debug(f"Event: {event}")
                     self._entities[event.line_offset].set(

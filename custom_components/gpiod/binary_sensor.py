@@ -82,7 +82,7 @@ class GPIODBinarySensor(BinarySensorEntity):
         hub.add_sensor(self, port, invert_logic, pull_mode, debounce)
 
     async def async_added_to_hass(self):
-        self._hub._hass.loop.create_task(self._hub.listen())
+        self.hass.loop.create_task(self._hub.listen())
 
     @property
     def name(self) -> str:

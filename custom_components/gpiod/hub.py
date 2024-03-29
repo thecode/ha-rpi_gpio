@@ -106,13 +106,32 @@ class Hub:
                 events = self._lines.read_edge_events()
                 for event in events:
                     _LOGGER.debug(f"Event: {event}")
-                    # self._entities[event.line_offset].update()
                     self._entities[event.line_offset].set(
                         True if event.event_type == EventType.RISING_EDGE else False
                     )
             else:
                 _LOGGER.debug(f"no event, rewhile: {self._listening}")
         _LOGGER.debug("listener stopped")
+
+    async def listen(self):
+        self._listening = True
+        # wait some time to allow other entities to register
+        await asyncio.sleep(10)
+        while self._listening:
+            events_available = await self._hass.async_add_executor_job(
+                self._lines.wait_edge_events,timedelta(seconds=LISTENER_WINDOW))
+            if events_available:
+                events = await self._hass.async_add_executor_job(self._lines.read_edge_events())
+                for event in events:
+                    _LOGGER.debug(f"Event: {event}")
+                    self._entities[event.line_offset].set(
+                       True if event.event_type == EventType.RISING_EDGE else False
+                    )
+            else:
+                _LOGGER.debug(f"nothread - no event, rewhile: {self._listening}")
+        # return if no longer listening
+        _LOGGER.debug("nothread listener stopped")
+
 
     def add_switch(self, entity, port, invert_logic) -> None:
         _LOGGER.debug(f"in add_switch {port}")

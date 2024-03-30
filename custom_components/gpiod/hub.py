@@ -34,7 +34,6 @@ class Hub:
         self._lines = None
         self._online = False
         self._listening = False
-        self._listener = None
         self._entities = {}
 
         if not gpiod.is_gpiochip_device(path):
@@ -141,3 +140,10 @@ class Hub:
 
     def update(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE
+
+    def add_cover(self, entity, relay_pin, invert_relay, 
+                      state_pin, state_pull_mode, invert_state) -> None:
+        _LOGGER.debug(f"in add_cover {relay_pin} {state_pin}")
+        self.add_switch(entity, relay_pin, invert_relay)
+        self.add_sensor(entity, state_pin, invert_state, state_pull_mode, 50)
+

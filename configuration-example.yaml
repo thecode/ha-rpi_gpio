@@ -30,7 +30,16 @@ switch:
         name: "Buzzer"
 
 binary_sensor:
-  platform: gpiod
-  binary_sensors:
-    - port: 7
-      name: "Button"
+  - platform: gpiod
+    binary_sensors:
+      - port: 7
+        name: "Button"
+
+cover:
+  - platform: gpiod
+    covers:
+      - relay_pin: 7
+        name: Cover blue
+        state_pin: 4
+        relay_time: 1.2
+          

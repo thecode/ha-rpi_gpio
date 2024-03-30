@@ -49,7 +49,15 @@ binary_sensor:
     sensors:
     - name: "Button"
       port: 7
-```
+
+cover:
+  - platform: gpiod
+    covers:
+      - relay_pin: 4
+        name: Cover blue
+        state_pin: 7
+        relay_time: 1200
+ ```
 
 ## Platform
 
@@ -98,4 +106,19 @@ logger:
     custom_components.gpiod: debug
 ```
 
+## Cover
 
+The `gpiod` cover platform allows you to control GPIOs to open/close covers
+
+### Options
+
+Key | Required | Default | Type | Description
+-- | -- | -- | -- | --
+`name` | yes | | string | The name for the cover entity
+`relay_pin`|yes| |integer|Relay switch pin switching cover motor
+`relay_time`|no|`200` |integer|Time in milliseconds relay switch will be switched to open/close cover
+`invert_relay`|no | `false`| boolean| invert logic for relay pin
+`state_pin`|yes| | integer|State pin sharing opened/closed status of cover
+`state_pull_mode`|no|`UP`|string|pull_mode for state trigger
+`invert_state`|no|`true`|boolean|invert logic for state pin
+    

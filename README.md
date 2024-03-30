@@ -69,7 +69,7 @@ Key | Required | Default | Type | Description
 `sensors` | yes | | list | List of sensor IO ports ([Raspberry Pi BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))
 `name` | yes | | string  | The name for the binary sensor entity
 `port` | yes | | integer | the GPIO port to be used
-`unique_id` | no | | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI
+`unique_id` | no | generated | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI
 `bouncetime` | no | `50` | integer | The time in milliseconds for port debouncing
 `invert_logic` | no | `false` (ACTIVE HIGH) | boolean | If `true`, inverts the output logic to ACTIVE LOW
 `pull_mode` | no | `UP` | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor
@@ -87,7 +87,7 @@ Key | Required | Default | Type | Description
 `switches` | yes | | list | List of switch IO ports ([Raspberry Pi BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))
 `name` | yes | | string | The name for the switch entity
 `port` | yes | | integer | the GPIO port to be used
-`unique_id` | no | | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI
+`unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI
 `invert_logic` | no | `false` | boolean | If true, inverts the output logic to ACTIVE LOW
 
 ## Add Debug info

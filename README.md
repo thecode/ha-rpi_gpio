@@ -2,11 +2,9 @@
 
 This HACS integration is used to address GPIO (especially and only tested for RaspberryPi) using libgpiod and python gpiod >=v2.02 since RPI.gpio is no longer supported. I created this for my own use, and to understand a custom integration, but since it is working on Raspberry pi feel free to use.
 
-**This is early stuff, working in my homeassistant environment. Test and use at your own risk!**
+**This is working in my homeassistant environment, that's it. Shared for testing and usage at your own risk!**
 
-This is a rewrite of [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio) adapted in [ha-gpio](https://codeberg.org/raboof/ha-gpio) and completely rewritten here ..
-
-Currently supports `binary_sensor` and `switch`; `cover` planned to be inline with the originla ha-rpi_gpio.
+This is a rewrite of [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio) adapted in [ha-gpio](https://codeberg.org/raboof/ha-gpio) and rewritten by me ..
 
 # Installation
 Via HACS: add as custom repository from github using this github url (HACS => integrations => 3-dots menu => custom repositories)
@@ -14,7 +12,6 @@ I have no plans to make this a HACS integration adding all tests and other stuff
 
 # Usage
 The `gpiod` platform should be initialized using the path to the gpio chip. Default is `/dev/gpiochip0`. Add the following to your `configuration.yaml` file:
-
 
 ## Sample config for the raspberry pi berryclip hat
 
@@ -63,7 +60,7 @@ cover:
 
 Key | Required | Default | Type | Description
 -- | -- | -- | -- | --
-`gpiod:` | yes | | | `gpiod` platform config and initialization
+`gpiod` | yes | | | `gpiod` platform config and initialization
 `path` | no | /dev/gpiochip0 | string | path to gpio device
 
 ## Binary Sensor
@@ -98,17 +95,9 @@ Key | Required | Default | Type | Description
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI
 `invert_logic` | no | `false` | boolean | If true, inverts the output logic to ACTIVE LOW
 
-## Add Debug info
-```yaml
-logger:
-  default: info
-  logs:
-    custom_components.gpiod: debug
-```
-
 ## Cover
 
-The `gpiod` cover platform allows you to control GPIOs to open/close covers
+The `gpiod` cover platform allows you to control GPIOs to open/close covers; note that I have only verified cover functionality simulating with switches and buttons, so logic could be off on some points ..
 
 ### Options
 
@@ -122,3 +111,11 @@ Key | Required | Default | Type | Description
 `state_pull_mode`|no|`UP`|string|pull_mode for state trigger
 `invert_state`|no|`true`|boolean|invert logic for state pin
     
+## Add Debug info
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.gpiod: debug
+```
+

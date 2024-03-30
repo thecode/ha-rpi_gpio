@@ -14,7 +14,7 @@ from homeassistant.components.cover import PLATFORM_SCHEMA, CoverEntity
 from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_PORT, CONF_UNIQUE_ID
 CONF_RELAY_PIN = "relay_pin"
 CONF_RELAY_TIME = "relay_time"
-DEFAULT_RELAY_TIME = 0.2
+DEFAULT_RELAY_TIME = 200
 CONF_INVERT_RELAY = "invert_relay"
 DEFAULT_INVERT_RELAY = False
 CONF_STATE_PIN = "state_pin"

@@ -76,7 +76,7 @@ Key | Required | Default | Type | Description
 `port` | yes | | integer | the GPIO port to be used
 `unique_id` | no | generated | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI
 `bouncetime` | no | `50` | integer | The time in milliseconds for port debouncing
-`invert_logic` | no | `false` (ACTIVE HIGH) | boolean | If `true`, inverts the output logic to ACTIVE LOW
+`invert_logic` | no | `false` | boolean | If `true`, inverts the output logic to ACTIVE LOW
 `pull_mode` | no | `UP` | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor
 
 
@@ -110,6 +110,7 @@ Key | Required | Default | Type | Description
 `state_pin`|yes| | integer|State pin sharing opened/closed status of cover
 `state_pull_mode`|no|`UP`|string|pull_mode for state trigger
 `invert_state`|no|`true`|boolean|invert logic for state pin
+`unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI
     
 ## Add Debug info
 ```yaml

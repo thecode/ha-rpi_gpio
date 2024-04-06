@@ -80,9 +80,10 @@ class GPIODBinarySensor(BinarySensorEntity):
         self._is_on = False != invert_logic
         hub.add_sensor(self, port, invert_logic, pull_mode, debounce)
 
-    async def async_added_to_hass(self):
+    # async def async_added_to_hass(self):
         # start listener
-        self._hub.edge_detect()
+        # return await self._hub.edge_detect()
+        # self.hass.async_create_task(self._hub.edge_detect())
 
     @property
     def name(self) -> str:

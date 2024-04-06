@@ -14,7 +14,6 @@ import homeassistant.helpers.config_validation as cv
 
 from homeassistant.const import (
     Platform,
-    EVENT_HOMEASSISTANT_STOP,
     CONF_PATH
 )
 
@@ -38,14 +37,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     path = config.get(DOMAIN, {}).get(CONF_PATH) or "/dev/gpiochip0" # last part for backwards compatibility
     hub = Hub(hass, path)
     hass.data[DOMAIN] = hub
-
-    def cleanup_gpio(event):
-        """Stuff to do before stopping."""
-        _LOGGER.debug(f"cleanup gpio {event}")
-        hub.cleanup()
-
-    # cleanup at shutdown of hass
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, cleanup_gpio)
 
     return True
 

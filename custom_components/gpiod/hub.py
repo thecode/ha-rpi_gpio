@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from . import DOMAIN
-import asyncio
 from time import sleep
 LISTENER_WINDOW = 5
 

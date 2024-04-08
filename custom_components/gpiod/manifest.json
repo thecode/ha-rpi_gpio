@@ -6,4 +6,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/jdeneef/ha_gpiod/issues",
   "requirements": [ "gpiod>=2.0.2" ],
+  "version": "v0.9.4"
 }

@@ -68,7 +68,7 @@ class Hub:
             return
 
         _LOGGER.debug("Start listener")
-        self._listener = self._hass.async_create_task(self.listen())
+        self._listener = self._hass.create_task(self.listen())
 
 
     def cleanup(self, _):

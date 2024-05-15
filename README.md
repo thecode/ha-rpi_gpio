@@ -7,7 +7,7 @@ This HACS integration is used to address GPIO (especially and only tested for Ra
 This is a rewrite of [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio) adapted in [ha-gpio](https://codeberg.org/raboof/ha-gpio) and rewritten by me ..
 
 # Installation
-Via HACS: add as custom repository from github using this github url (HACS => integrations => 3-dots menu => custom repositories)
+Via HACS: add as custom repository from github using this github https://github.com/jdeneef/ha_gpiod/ (HACS => integrations => 3-dots menu => custom repositories, go back to hacs, install gpiod component, reboot, add config, reboot)
 I have no plans to make this a HACS integration adding all tests and other stuff but you are free to use this anyway. 
 
 # Usage

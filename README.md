@@ -16,6 +16,7 @@ The `gpiod` platform should be initialized using the path to the gpio chip. Defa
 ## Sample config for the raspberry pi berryclip hat
 
 See also configuraton-example.yaml
+For rpi3, rpi4 use `/dev/gpiochip0`, for rpi5 use `/dev/gpiochip4`
 
 ```yaml
 gpiod:

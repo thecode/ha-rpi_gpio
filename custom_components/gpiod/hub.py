@@ -24,7 +24,7 @@ class Hub:
     def __init__(self, hass: HomeAssistant, path: str) -> None:
         """GPIOD Hub"""
 
-        _LOGGER.debug(f"in hub.__init__ {path}")
+        _LOGGER.debug(f"in hub.__init__ path: {path}")
 
         self._path = path
         self._name = path
@@ -37,25 +37,46 @@ class Hub:
         self._listener = None
         self._entities = {}
 
-        if not gpiod.is_gpiochip_device(path):
-            _LOGGER.debug(f"initilization failed: {path} not a gpiochip_device")
-            return
-        with gpiod.Chip(path) as chip:
-            info = chip.get_info()
-            if not "pinctrl" in info.label:
-                _LOGGER.debug(f"initialization failed: {path} no pinctrl")
-                return
-
-        self._online = True
-
-        if self._online:
-            _LOGGER.info(f"initialized: {path}")
+        if path:
+            # use config
+            self._online = self.verify_gpiochip(path)
+            if self._online:
+                self._path = path
         else:
-            _LOGGER.warning(f"initialization failed: {path}")
+            # discover
+            for d in [0,4,1,2,3,5]:
+                # rpi3,4 using 0. rpi5 using 4
+                path = f"/dev/gpiochip{d}"
+                self._online = self.verify_gpiochip(path)
+                if self._online:
+                    self._path = path
+                    break
+
+        if not self._online:
+            _LOGGER.error("No gpio device detected, bailing out")
+            return
+        
+        _LOGGER.debug(f"using gpio_device: {self._path}")
     
         # startup and shutdown triggers of hass
         self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, self.startup)
         self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self.cleanup)
+
+    def verify_gpiochip(self, path):
+        if not gpiod.is_gpiochip_device(path):
+            _LOGGER.debug(f"verify_gpiochip: {path} not a gpiochip_device")
+            return False
+
+        _LOGGER.debug(f"verify_gpiochip: {path} is a gpiochip_device")
+        chip = gpiod.Chip(path)
+        info = chip.get_info()
+        if not "pinctrl" in info.label:
+            _LOGGER.debug(f"verify_gpiochip: {path} no pinctrl {info.label}")
+            return False
+
+        _LOGGER.debug(f"verify_gpiochip gpiodevice: {path} has pinctrl")
+        return True
+        
 
     def startup(self, _):
         """Stuff to do after starting."""

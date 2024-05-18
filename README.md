@@ -11,13 +11,17 @@ Via HACS: add as custom repository from github using this github https://github.
 I have no plans to make this a HACS integration adding all tests and other stuff but you are free to use this anyway. 
 
 # Usage
-The `gpiod` platform should be initialized using the path to the gpio chip. Default is `/dev/gpiochip0`. Add the following to your `configuration.yaml` file:
+The `gpiod` platform should be initialized using the path to the gpio chip. When path is missing `/dev/gpiochip` 0 to 5 are tested for being a gpiodevice having `pinctrl`. So with a raspberry pi you should be ok to leave the path empty.
+
+Raspberry Pi | GPIO Device
+--- | ---
+RPi3, RPi4 | `/dev/gpiochip0`
+RPi5 | `/dev/gpiochip4`
+
 
 ## Sample config for the raspberry pi berryclip hat
 
 See also configuraton-example.yaml
-For rpi3, rpi4 use `/dev/gpiochip0`, for rpi5 use `/dev/gpiochip4`
-
 ```yaml
 gpiod:
   path: '/dev/gpiochip0'
@@ -62,7 +66,7 @@ cover:
 Key | Required | Default | Type | Description
 -- | -- | -- | -- | --
 `gpiod` | yes | | | `gpiod` platform config and initialization
-`path` | no | /dev/gpiochip0 | string | path to gpio device
+`path` | no | discovered | string | path to gpio device
 
 ## Binary Sensor
 

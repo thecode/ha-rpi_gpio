@@ -9,7 +9,6 @@
 # Switch - Pin 26 - GPIO7
 
 gpiod:
-  path: /dev/gpiochip0
 
 switch:
   - platform: gpiod

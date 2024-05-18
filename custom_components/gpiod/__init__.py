@@ -26,7 +26,7 @@ PLATFORMS = [
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema({
-            vol.Optional(CONF_PATH, default="/dev/gpiochip0"): cv.string
+            vol.Optional(CONF_PATH): cv.string
         })
     },
     extra=vol.ALLOW_EXTRA
@@ -34,7 +34,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the GPIO component."""
-    path = config.get(DOMAIN, {}).get(CONF_PATH) or "/dev/gpiochip0" # last part for backwards compatibility
+    path = config.get(DOMAIN, {}).get(CONF_PATH) 
     hub = Hub(hass, path)
     hass.data[DOMAIN] = hub
 

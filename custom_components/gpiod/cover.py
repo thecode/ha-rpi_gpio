@@ -54,6 +54,8 @@ async def async_setup_platform(
     
     _LOGGER.debug(f"setup_platform: {config}")
     hub = hass.data[DOMAIN]
+    if not hub._online:
+        _LOGGER.error("hub not online, bailing out")
 
     covers = []
     for cover in config.get(CONF_COVERS):

@@ -47,6 +47,8 @@ async def async_setup_platform(
     
     _LOGGER.debug(f"setup_platform: {config}")
     hub = hass.data[DOMAIN]
+    if not hub._online:
+        _LOGGER.error("hub not online, bailing out")
 
     sensors = []
     for sensor in config.get(CONF_SENSORS):

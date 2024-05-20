@@ -11,7 +11,7 @@ Via HACS: add as custom repository from github using this github https://github.
 I have no plans to make this a HACS integration adding all tests and other stuff but you are free to use this anyway. 
 
 # Usage
-The `gpiod` platform should be initialized using the path to the gpio chip. When path is missing `/dev/gpiochip` 0 to 5 are tested for being a gpiodevice having `pinctrl`. So with a raspberry pi you should be ok to leave the path empty.
+The `gpiod` platform should be initialized using the path to the gpio chip. When path is not added in the config `/dev/gpiochip[0-5]` are tested for being a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`. So with a raspberry pi you should be OK to leave the path empty.
 
 Raspberry Pi | GPIO Device
 --- | ---

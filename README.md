@@ -80,7 +80,7 @@ Key | Required | Default | Type | Description
 `name` | yes | | string  | The name for the binary sensor entity
 `port` | yes | | integer | the GPIO port to be used
 `unique_id` | no | generated | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI
-`bouncetime` | no | `50` | integer | The time in milliseconds for port debouncing
+`debounce` | no | `50` | integer | The time in milliseconds for port debouncing
 `invert_logic` | no | `false` | boolean | If `true`, inverts the output logic to ACTIVE LOW
 `pull_mode` | no | `UP` | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor
 

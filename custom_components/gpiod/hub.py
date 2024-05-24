@@ -88,6 +88,10 @@ class Hub:
         if not self._edge_events:
             return
 
+        # read initial states for sensors
+        for port in self._config:
+            self._entities[port].update()
+
         _LOGGER.debug("Start listener")
         self._listener = self._hass.create_task(self.listen())
 
@@ -135,9 +139,7 @@ class Hub:
                     self._lines.read_edge_events)
                 for event in events:
                     _LOGGER.debug(f"Event: {event}")
-                    self._entities[event.line_offset].set(
-                       True if event.event_type == EventType.RISING_EDGE else False
-                    )
+                    self._entities[event.line_offset].update()
 
     def add_switch(self, entity, port, invert_logic) -> None:
         _LOGGER.debug(f"in add_switch {port}")

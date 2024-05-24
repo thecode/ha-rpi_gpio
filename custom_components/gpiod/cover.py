@@ -75,7 +75,6 @@ async def async_setup_platform(
 
     async_add_entities(covers)
 
-
 class GPIODCover(CoverEntity):
     should_poll = False
     is_opening = False
@@ -96,10 +95,6 @@ class GPIODCover(CoverEntity):
         self._is_closed = False != invert_state
         hub.add_cover(self, relay_pin, invert_relay, 
                       state_pin, state_pull_mode, invert_state)
-
-    async def async_added_to_hass(self):
-        # start listener
-        self._hub.edge_detect()
 
     @property
     def name(self) -> str:
@@ -137,8 +132,4 @@ class GPIODCover(CoverEntity):
         sleep(self._relay_time/1000)
         self._hub.turn_off(self._relay_pin)
         self.is_opening = False
-        self.schedule_update_ha_state(False)
-
-    def set(self, is_closed: bool):
-        self._is_closed = is_closed
         self.schedule_update_ha_state(False)

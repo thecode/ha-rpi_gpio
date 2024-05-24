@@ -93,3 +93,6 @@ class GPIODSwitch(SwitchEntity):
         self._is_on = False
         self.schedule_update_ha_state()
 
+    def update(self):
+        self._is_on = self._hub.update(self._port)
+        self.schedule_update_ha_state(False)

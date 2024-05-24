@@ -10,8 +10,8 @@ _LOGGER = logging.getLogger(__name__)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.components.cover import PLATFORM_SCHEMA, CoverEntity
-from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_PORT, CONF_UNIQUE_ID
+from homeassistant.components.cover import PLATFORM_SCHEMA, CoverEntity, STATE_OPENING, STATE_OPEN, STATE_CLOSING, STATE_CLOSED
+from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_UNIQUE_ID
 CONF_RELAY_PIN = "relay_pin"
 CONF_RELAY_TIME = "relay_time"
 DEFAULT_RELAY_TIME = 200
@@ -113,23 +113,38 @@ class GPIODCover(CoverEntity):
         self.schedule_update_ha_state(False)
 
     def close_cover(self, **kwargs):
-        if self.is_closed:
+        if self._is_closed:
             return
         self._hub.turn_on(self._relay_pin)
         self.is_closing = True
         self.schedule_update_ha_state(False)
         sleep(self._relay_time/1000)
+        if not self.is_closing:
+            # closing stopped
+            return
         self._hub.turn_off(self._relay_pin)
         self.is_closing = False
         self.schedule_update_ha_state(False)
 
     def open_cover(self, **kwargs):
-        if not self.is_closed:
+        if not self._is_closed:
             return
         self._hub.turn_on(self._relay_pin)
         self.is_opening = True
         self.schedule_update_ha_state(False)
         sleep(self._relay_time/1000)
+        if not self.is_opening:
+            # opening stopped
+            return
         self._hub.turn_off(self._relay_pin)
         self.is_opening = False
+        self.schedule_update_ha_state(False)
+
+    def stop_cover(self, **kwargs):
+        if not (self.is_closing or self.is_opening):
+            return
+        self._hub.turn_off(self._relay_pin)
+        self.is_opening = False
+        self.is_closing = False
+        self._is_closed = None
         self.schedule_update_ha_state(False)

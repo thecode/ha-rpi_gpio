@@ -65,8 +65,8 @@ cover:
 
 Key | Required | Default | Type | Description
 -- | -- | -- | -- | --
-`gpiod` | yes | | | `gpiod` platform config and initialization
-`path` | no | discovered | string | path to gpio device
+`gpiod` | only for path| | | `gpiod` platform config and initialization, only required when you need to specify a specific gpiodevice path (see path)
+`path` | no | discovered | string | path to gpio device, if not set autodiscovered
 
 ## Binary Sensor
 

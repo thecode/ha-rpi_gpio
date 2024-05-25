@@ -8,10 +8,9 @@ This is a rewrite of [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio) adapt
 
 # Installation
 Via HACS: add as custom repository from github using this github https://github.com/jdeneef/ha_gpiod/ (HACS => integrations => 3-dots menu => custom repositories, go back to hacs, install gpiod component, reboot, add config, reboot)
-I have no plans to make this a HACS integration adding all tests and other stuff but you are free to use this anyway. 
 
 # Usage
-The `gpiod` platform should be initialized using the path to the gpio chip. When path is not added in the config `/dev/gpiochip[0-5]` are tested for being a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`. So with a raspberry pi you should be OK to leave the path empty.
+The `gpiod` platform will be initialized using the path to the gpio chip. When path is not in the config `/dev/gpiochip[0-5]` are tested for a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`. So with a raspberry pi you should be OK to leave the path empty.
 
 Raspberry Pi | GPIO Device
 --- | ---
@@ -21,7 +20,7 @@ RPi5 | `/dev/gpiochip4`
 
 ## Sample config for the raspberry pi berryclip hat
 
-See also configuraton-example.yaml
+See also configuraton-example.yaml; note that below config shows most options, and can't be used as is, since `cover` reuses `switch` and `sensor` `ports`
 ```yaml
 gpiod:
   path: '/dev/gpiochip0'

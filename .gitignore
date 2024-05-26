@@ -1,1 +1,22 @@
+# artifacts
+__pycache__
+.pytest*
+*/build/*
+*/dist/*
+
+# Installer logs
+pip-log.txt
+
+# tests
+.coverage
+.pytest*
+
+# Env
+.env
+.venv
+env/
+venv/
+
+# misc
 .session.nvim
+.vscode

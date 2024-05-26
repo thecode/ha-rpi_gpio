@@ -8,8 +8,6 @@
 # Buzzer - Pin 24 - GPIO8
 # Switch - Pin 26 - GPIO7
 
-gpiod:
-
 switch:
   - platform: gpiod
     switches:
@@ -34,11 +32,12 @@ binary_sensor:
       - port: 7
         name: "Button"
 
-cover:
-  - platform: gpiod
-    covers:
-      - relay_pin: 7
-        name: Cover blue
-        state_pin: 4
-        relay_time: 1200
+# sample for cover
+# cover:
+#   - platform: gpiod
+#     covers:
+#       - relay_pin: 7
+#         name: Cover blue
+#         state_pin: 4
+#         relay_time: 1200
           

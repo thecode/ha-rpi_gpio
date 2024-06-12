@@ -76,7 +76,24 @@ class Hub:
 
         _LOGGER.debug(f"verify_gpiochip gpiodevice: {path} has pinctrl")
         return True
-        
+
+    def _get_bias(self, pull_mode):
+      pull_modes = {
+        "UP": Bias.PULL_UP,
+        "DOWN": Bias.PULL_DOWN,
+        "OFF": Bias.DISABLED,
+        "AS_IS": Bias.AS_IS
+      }
+      return pull_modes.get(pull_mode, Bias.DISABLED)
+
+    def _get_drive(self, drive_mode):
+      drive_modes = {
+        "OPEN_DRAIN": DriveMode.OPEN_DRAIN,
+        "OPEN_SOURCE": DriveMode.OPEN_SOURCE,
+        "PUSH_PULL": DriveMode.PUSH_PULL,
+        "AS_IS": DriveMode.AS_IS
+      }
+      return drive_modes.get(drive_mode, DriveMode.PUSH_PULL)
 
     def startup(self, _):
         """Stuff to do after starting."""
@@ -141,12 +158,14 @@ class Hub:
                     _LOGGER.debug(f"Event: {event}")
                     self._entities[event.line_offset].update()
 
-    def add_switch(self, entity, port, invert_logic) -> None:
+    def add_switch(self, entity, port, invert_logic, bias=None, drive=None) -> None:
         _LOGGER.debug(f"in add_switch {port}")
         self._entities[port] = entity
         self._config[port].direction = Direction.OUTPUT
         self._config[port].output_value = Value.INACTIVE
         self._config[port].active_low = invert_logic
+        self._config[port].bias = self._get_bias(bias)
+        self._config[port].drive_mode = self._get_drive(drive)
 
     def turn_on(self, port) -> None:
         _LOGGER.debug(f"in turn_on")

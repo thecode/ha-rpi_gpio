@@ -14,8 +14,20 @@ from collections import defaultdict
 from datetime import timedelta
 import gpiod
 
-from gpiod.line import Direction, Value, Bias, Edge, Clock
+from gpiod.line import Direction, Value, Bias, Drive, Edge, Clock
 EventType = gpiod.EdgeEvent.Type
+
+BIAS = { 
+    "UP": Bias.PULL_UP, 
+    "DOWN": Bias.PULL_DOWN, 
+    "OFF": Bias.DISABLED, 
+    "AS_IS": Bias.AS_IS
+}
+DRIVE_MODE = { 
+    "OPEN_DRAIN": Drive.OPEN_DRAIN, 
+    "OPEN_SOURCE": Drive.OPEN_SOURCE, 
+    "PUSH_PULL": Drive.PUSH_PULL, 
+} 
 
 class Hub:
 
@@ -55,9 +67,9 @@ class Hub:
         if not self._online:
             _LOGGER.error("No gpio device detected, bailing out")
             return
-        
+
         _LOGGER.debug(f"using gpio_device: {self._path}")
-    
+
         # startup and shutdown triggers of hass
         self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, self.startup)
         self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self.cleanup)
@@ -77,23 +89,6 @@ class Hub:
         _LOGGER.debug(f"verify_gpiochip gpiodevice: {path} has pinctrl")
         return True
 
-    def _get_bias(self, pull_mode):
-      pull_modes = {
-        "UP": Bias.PULL_UP,
-        "DOWN": Bias.PULL_DOWN,
-        "OFF": Bias.DISABLED,
-        "AS_IS": Bias.AS_IS
-      }
-      return pull_modes.get(pull_mode, Bias.DISABLED)
-
-    def _get_drive(self, drive_mode):
-      drive_modes = {
-        "OPEN_DRAIN": DriveMode.OPEN_DRAIN,
-        "OPEN_SOURCE": DriveMode.OPEN_SOURCE,
-        "PUSH_PULL": DriveMode.PUSH_PULL,
-        "AS_IS": DriveMode.AS_IS
-      }
-      return drive_modes.get(drive_mode, DriveMode.PUSH_PULL)
 
     def startup(self, _):
         """Stuff to do after starting."""
@@ -158,19 +153,19 @@ class Hub:
                     _LOGGER.debug(f"Event: {event}")
                     self._entities[event.line_offset].update()
 
-    def add_switch(self, entity, port, invert_logic, bias=None, drive=None) -> None:
+    def add_switch(self, entity, port, invert_logic, bias, drive) -> None:
         _LOGGER.debug(f"in add_switch {port}")
         self._entities[port] = entity
         self._config[port].direction = Direction.OUTPUT
         self._config[port].output_value = Value.INACTIVE
         self._config[port].active_low = invert_logic
-        self._config[port].bias = self._get_bias(bias)
-        self._config[port].drive_mode = self._get_drive(drive)
+        self._config[port].bias = BIAS[bias]
+        self._config[port].drive = BIAS[drive]
 
     def turn_on(self, port) -> None:
         _LOGGER.debug(f"in turn_on")
         self._lines.set_value(port, Value.ACTIVE)
-        
+
     def turn_off(self, port) -> None:
         _LOGGER.debug(f"in turn_off")
         self._lines.set_value(port, Value.INACTIVE)
@@ -189,9 +184,9 @@ class Hub:
     def update(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE
 
-    def add_cover(self, entity, relay_pin, invert_relay, 
-                      state_pin, state_pull_mode, invert_state) -> None:
+    def add_cover(self, entity, relay_pin, invert_relay, bias, drive, 
+                  state_pin, state_pull_mode, invert_state) -> None:
         _LOGGER.debug(f"in add_cover {relay_pin} {state_pin}")
-        self.add_switch(entity, relay_pin, invert_relay)
+        self.add_switch(entity, relay_pin, invert_relay, bias, drive)
         self.add_sensor(entity, state_pin, invert_state, state_pull_mode, 50)
 

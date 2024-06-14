@@ -12,6 +12,10 @@ from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
 from homeassistant.const import CONF_SWITCHES, CONF_NAME, CONF_PORT, CONF_UNIQUE_ID
 CONF_INVERT_LOGIC="invert_logic"
 DEFAULT_INVERT_LOGIC = False
+CONF_BIAS="bias"
+DEFAULT_BIAS = "UP"
+CONF_DRIVE_MODE="drive_mode"
+DEFAULT_DRIVE_MODE = "PUSH_PULL"
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -25,6 +29,8 @@ PLATFORM_SCHEMA = vol.All(
                     vol.Required(CONF_PORT): cv.positive_int,
                     vol.Optional(CONF_UNIQUE_ID): cv.string,
                     vol.Optional(CONF_INVERT_LOGIC, default=DEFAULT_INVERT_LOGIC): cv.boolean
+                    vol.Optional(CONF_BIAS, default=DEFAULT_BIAS): cv.string,
+                    vol.Optional(CONF_DRIVE_MODE, default=DEFAULT_DRIVE_MODE): cv.string
                 }]
             )
         }
@@ -61,15 +67,17 @@ async def async_setup_platform(
 class GPIODSwitch(SwitchEntity):
     should_poll = False
 
-    def __init__(self, hub, name, port, unique_id, invert_logic):
-        _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id}")
+    def __init__(self, hub, name, port, unique_id, invert_logic, bias, drive_mode):
+        _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id} - invert_logic: {invert_logic} - bias: {bias} - drive_mode: {drive_mode}")
         self._hub = hub
         self._attr_name = name
         self._port = port
         self._attr_unique_id = unique_id
         self._invert_logic = invert_logic
+        self._bias = bias
+        self._drive_mode = drive_mode
         self._is_on = False != invert_logic
-        hub.add_switch(self, port, invert_logic)
+        hub.add_switch(self, port, invert_logic, bias, drive_mode)
 
     @property
     def name(self) -> str:

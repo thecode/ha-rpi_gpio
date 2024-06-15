@@ -98,6 +98,8 @@ Key | Required | Default | Type | Description
 `port` | yes | | integer | the GPIO port to be used
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
 `invert_logic` | no | `false` | boolean | If true, inverts the output logic to ACTIVE LOW
+`bias`|no|`AS_IS`|string|set `relay_pin` bias, options: `PULL_UP`, `PULL_DOWN`, `DISABLED`, `AS_IS`
+`drive`|no|`PULL_UP`|string|set `relay_pin`drive, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
 
 ## Cover
 
@@ -111,6 +113,8 @@ Key | Required | Default | Type | Description
 `relay_pin`|yes| |integer|Relay switch pin switching cover motor
 `relay_time`|no|`200` |integer|Time in milliseconds relay switch will be switched to open/close cover
 `invert_relay`|no | `false`| boolean| invert logic for relay pin
+`bias`|no|`AS_IS`|string|set `relay_pin` bias, options: `PULL_UP`, `PULL_DOWN`, `DISABLED`, `AS_IS`
+`drive`|no|`PULL_UP`|string|set `relay_pin`drive, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
 `state_pin`|yes| | integer|State pin sharing opened/closed status of cover
 `state_pull_mode`|no|`UP`|string|pull_mode for state trigger
 `invert_state`|no|`true`|boolean|invert logic for state pin

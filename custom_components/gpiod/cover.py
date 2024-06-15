@@ -17,6 +17,10 @@ CONF_RELAY_TIME = "relay_time"
 DEFAULT_RELAY_TIME = 200
 CONF_INVERT_RELAY = "invert_relay"
 DEFAULT_INVERT_RELAY = False
+CONF_BIAS = "bias"
+DEFAULT_BIAS = "AS_IS"
+CONF_DRIVE = "drive"
+DEFAULT_DRIVE = "PUSH_PULL"
 CONF_STATE_PIN = "state_pin"
 CONF_STATE_PULL_MODE = "state_pull_mode"
 DEFAULT_STATE_PULL_MODE = "UP"
@@ -35,6 +39,8 @@ PLATFORM_SCHEMA = vol.All(
                     vol.Required(CONF_RELAY_PIN): cv.positive_int,
                     vol.Optional(CONF_RELAY_TIME, default=DEFAULT_RELAY_TIME): cv.positive_int,
                     vol.Optional(CONF_INVERT_RELAY, default=DEFAULT_INVERT_RELAY): cv.boolean,
+                    vol.Optional(CONF_BIAS, default=DEFAULT_BIAS): cv.string,
+                    vol.Optional(CONF_DRIVE, default=DEFAULT_DRIVE): cv.string,
                     vol.Required(CONF_STATE_PIN): cv.positive_int,
                     vol.Optional(CONF_STATE_PULL_MODE, default=DEFAULT_STATE_PULL_MODE): cv.string,
                     vol.Optional(CONF_INVERT_STATE, default=DEFAULT_INVERT_STATE): cv.boolean,
@@ -66,6 +72,8 @@ async def async_setup_platform(
                 cover[CONF_RELAY_PIN],
                 cover[CONF_RELAY_TIME],
                 cover.get(CONF_INVERT_RELAY),
+                cover.get(CONF_BIAS),
+                cover.get(CONF_DRIVE),
                 cover[CONF_STATE_PIN],
                 cover.get(CONF_STATE_PULL_MODE),
                 cover.get(CONF_INVERT_STATE),
@@ -80,7 +88,7 @@ class GPIODCover(CoverEntity):
     is_opening = False
     is_closing = False
 
-    def __init__(self, hub, name, relay_pin, relay_time, invert_relay, 
+    def __init__(self, hub, name, relay_pin, relay_time, invert_relay, bias, drive,
                  state_pin, state_pull_mode, invert_state, unique_id):
         _LOGGER.debug(f"GPIODCover init: {relay_pin}:{state_pin} - {name} - {unique_id} - {relay_time}")
         self._hub = hub
@@ -88,12 +96,14 @@ class GPIODCover(CoverEntity):
         self._relay_pin = relay_pin
         self._relay_time = relay_time
         self._invert_relay = invert_relay
+        self._bias = bias
+        self._drive = drive
         self._state_pin = state_pin
         self._state_pull_mode = state_pull_mode
         self._invert_state = invert_state
         self._attr_unique_id = unique_id
         self._is_closed = False != invert_state
-        hub.add_cover(self, relay_pin, invert_relay, 
+        hub.add_cover(self, relay_pin, invert_relay, bias, drive,
                       state_pin, state_pull_mode, invert_state)
 
     @property

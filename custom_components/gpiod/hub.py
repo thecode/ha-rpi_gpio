@@ -11,7 +11,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, EVENT_HOMEASSISTANT_START
 
 from collections import defaultdict
-from typing import Optional
 from datetime import timedelta
 import gpiod
 
@@ -20,9 +19,12 @@ EventType = gpiod.EdgeEvent.Type
 
 BIAS = { 
     "PULL_UP": Bias.PULL_UP, 
-    "PULL_DOWN": Bias.PULL_DOWN, 
-    "DISABLED": Bias.DISABLED, 
-    "AS_IS": Bias.AS_IS
+    "PULL_DOWN": Bias.PULL_DOWN,
+    "UP": Bias.PULL_UP,
+    "DOWN": Bias.PULL_DOWN,
+    "DISABLED": Bias.DISABLED,
+    "OFF": Bias.DISABLED,
+    "AS_IS": Bias.AS_IS,
 }
 DRIVE = { 
     "OPEN_DRAIN": Drive.OPEN_DRAIN, 
@@ -44,8 +46,8 @@ class Hub:
         self._id = path
         self._hass = hass
         self._online = False
+        self._lines : gpiod.line_request.LineRequest = None
         self._config = defaultdict(gpiod.LineSettings)
-        self._lines : Optional[gpiod.LineRequest] = None
         self._edge_events = False
         self._listener = None
         self._entities = {}
@@ -97,13 +99,15 @@ class Hub:
         if not self._online:
             return
 
+        # setup lines
         self.update_lines()
-        if not self._edge_events:
-            return
 
         # read initial states for sensors
         for port in self._config:
             self._entities[port].update()
+
+        if not self._edge_events:
+            return
 
         _LOGGER.debug("Start listener")
         self._listener = self._hass.create_task(self.listen())
@@ -154,12 +158,12 @@ class Hub:
                     _LOGGER.debug(f"Event: {event}")
                     self._entities[event.line_offset].update()
 
-    def add_switch(self, entity, port, invert_logic, bias, drive) -> None:
+    def add_switch(self, entity, port, active_low, bias, drive) -> None:
         _LOGGER.debug(f"in add_switch {port}")
         self._entities[port] = entity
         self._config[port].direction = Direction.OUTPUT
         self._config[port].output_value = Value.INACTIVE
-        self._config[port].active_low = invert_logic
+        self._config[port].active_low = active_low
         self._config[port].bias = BIAS[bias]
         self._config[port].drive = DRIVE[drive]
 
@@ -171,12 +175,12 @@ class Hub:
         _LOGGER.debug(f"in turn_off")
         self._lines.set_value(port, Value.INACTIVE)
 
-    def add_sensor(self, entity, port, invert_logic, pull_mode, debounce) -> None:
+    def add_sensor(self, entity, port, active_low, bias, debounce) -> None:
         _LOGGER.debug(f"in add_sensor {port}")
         self._entities[port] = entity
         self._config[port].direction = Direction.INPUT
-        self._config[port].active_low = invert_logic
-        self._config[port].bias = Bias.PULL_DOWN if pull_mode == "DOWN" else Bias.PULL_UP
+        self._config[port].active_low = active_low
+        self._config[port].bias = BIAS[bias]
         self._config[port].debounce_period = timedelta(milliseconds=debounce)
         self._config[port].edge_detection = Edge.BOTH
         self._config[port].event_clock = Clock.REALTIME
@@ -185,9 +189,9 @@ class Hub:
     def update(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE
 
-    def add_cover(self, entity, relay_pin, invert_relay, bias, drive, 
-                  state_pin, state_pull_mode, invert_state) -> None:
-        _LOGGER.debug(f"in add_cover {relay_pin} {state_pin}")
-        self.add_switch(entity, relay_pin, invert_relay, bias, drive)
-        self.add_sensor(entity, state_pin, invert_state, state_pull_mode, 50)
+    def add_cover(self, entity, relay_port, relay_active_low, relay_bias, relay_drive, 
+                  state_port, state_bias, state_active_low) -> None:
+        _LOGGER.debug(f"in add_cover {relay_port} {state_port}")
+        self.add_switch(entity, relay_port, relay_active_low, relay_bias, relay_drive)
+        self.add_sensor(entity, state_port, state_active_low, state_bias, 50)
 

@@ -10,22 +10,25 @@ _LOGGER = logging.getLogger(__name__)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.components.cover import PLATFORM_SCHEMA, CoverEntity, STATE_OPENING, STATE_OPEN, STATE_CLOSING, STATE_CLOSED
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.components.cover import CoverEntity
 from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_UNIQUE_ID
-CONF_RELAY_PIN = "relay_pin"
+from .hub import BIAS, DRIVE
+
+CONF_RELAY_PORT = "relay_port"
 CONF_RELAY_TIME = "relay_time"
-DEFAULT_RELAY_TIME = 200
-CONF_INVERT_RELAY = "invert_relay"
-DEFAULT_INVERT_RELAY = False
-CONF_BIAS = "bias"
-DEFAULT_BIAS = "AS_IS"
-CONF_DRIVE = "drive"
-DEFAULT_DRIVE = "PUSH_PULL"
-CONF_STATE_PIN = "state_pin"
-CONF_STATE_PULL_MODE = "state_pull_mode"
-DEFAULT_STATE_PULL_MODE = "UP"
-CONF_INVERT_STATE = "invert_state"
-DEFAULT_INVERT_STATE = False
+DEFAULT_RELAY_TIME = 2000
+CONF_RELAY_ACTIVE_LOW = "relay_active_low"
+DEFAULT_RELAY_ACTIVE_LOW = False
+CONF_RELAY_BIAS = "relay_bias"
+DEFAULT_RELAY_BIAS = "AS_IS"
+CONF_RELAY_DRIVE = "relay_drive"
+DEFAULT_RELAY_DRIVE = "PUSH_PULL"
+CONF_STATE_PORT = "state_port"
+CONF_STATE_BIAS = "state_pull_mode"
+DEFAULT_STATE_BIAS = "PULL_UP"
+CONF_STATE_ACTIVE_LOW = "state_active_low"
+DEFAULT_STATE_ACTIVE_LOW = False
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -36,14 +39,19 @@ PLATFORM_SCHEMA = vol.All(
             vol.Exclusive(CONF_COVERS, CONF_COVERS): vol.All(
                 cv.ensure_list, [{
                     vol.Required(CONF_NAME): cv.string,
-                    vol.Required(CONF_RELAY_PIN): cv.positive_int,
+                    vol.Optional(CONF_RELAY_PORT): vol.In(list(range(1,40))),
+                    vol.Optional("relay_pin"): vol.In(list(range(1,40))), # backwards compatibility for now
                     vol.Optional(CONF_RELAY_TIME, default=DEFAULT_RELAY_TIME): cv.positive_int,
-                    vol.Optional(CONF_INVERT_RELAY, default=DEFAULT_INVERT_RELAY): cv.boolean,
-                    vol.Optional(CONF_BIAS, default=DEFAULT_BIAS): cv.string,
-                    vol.Optional(CONF_DRIVE, default=DEFAULT_DRIVE): cv.string,
-                    vol.Required(CONF_STATE_PIN): cv.positive_int,
-                    vol.Optional(CONF_STATE_PULL_MODE, default=DEFAULT_STATE_PULL_MODE): cv.string,
-                    vol.Optional(CONF_INVERT_STATE, default=DEFAULT_INVERT_STATE): cv.boolean,
+                    vol.Optional(CONF_RELAY_ACTIVE_LOW): cv.boolean,
+                    vol.Optional("invert_relay"): cv.boolean, # backwards compatibility for now
+                    vol.Optional(CONF_RELAY_BIAS, default=DEFAULT_RELAY_BIAS): vol.In(BIAS.keys()),
+                    vol.Optional(CONF_RELAY_DRIVE, default=DEFAULT_RELAY_DRIVE): vol.In(DRIVE.keys()),
+                    vol.Optional(CONF_STATE_PORT): vol.In(list(range(1,40))),
+                    vol.Optional("state_pin"): vol.In(list(range(1,40))),  # backwards compatibility for now
+                    vol.Optional(CONF_STATE_BIAS): vol.In(BIAS.keys()),
+                    vol.Optional("state_pull_mode"): vol.In(BIAS.keys()), # backwards compatibility for now
+                    vol.Optional(CONF_STATE_ACTIVE_LOW): cv.boolean,
+                    vol.Optional("invert_state"): cv.boolean, # backwards compatibility for now
                     vol.Optional(CONF_UNIQUE_ID): cv.string,
                 }]
             )
@@ -69,15 +77,15 @@ async def async_setup_platform(
             GPIODCover(
                 hub,
                 cover[CONF_NAME],
-                cover[CONF_RELAY_PIN],
+                cover.get(CONF_RELAY_PORT) or cover.get("relay_pin"),
                 cover[CONF_RELAY_TIME],
-                cover.get(CONF_INVERT_RELAY),
-                cover.get(CONF_BIAS),
-                cover.get(CONF_DRIVE),
-                cover[CONF_STATE_PIN],
-                cover.get(CONF_STATE_PULL_MODE),
-                cover.get(CONF_INVERT_STATE),
-                cover.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{cover[CONF_RELAY_PIN]}_{cover[CONF_NAME].lower().replace(' ', '_')}",
+                cover.get(CONF_RELAY_ACTIVE_LOW) or cover.get("invert_relay") or DEFAULT_RELAY_ACTIVE_LOW,
+                cover.get(CONF_RELAY_BIAS),
+                cover.get(CONF_RELAY_DRIVE),
+                cover.get(CONF_STATE_PORT) or cover.get("state_pin"),
+                cover.get(CONF_STATE_BIAS) or cover.get("state_bias") or DEFAULT_STATE_BIAS,
+                cover.get(CONF_STATE_ACTIVE_LOW) or cover.get("invert_state") or DEFAULT_STATE_ACTIVE_LOW,
+                cover.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{cover.get(CONF_RELAY_PORT) or cover.get("relay_pin")}_{cover[CONF_NAME].lower().replace(' ', '_')}",
             )
         )
 
@@ -88,73 +96,62 @@ class GPIODCover(CoverEntity):
     is_opening = False
     is_closing = False
 
-    def __init__(self, hub, name, relay_pin, relay_time, invert_relay, bias, drive,
-                 state_pin, state_pull_mode, invert_state, unique_id):
-        _LOGGER.debug(f"GPIODCover init: {relay_pin}:{state_pin} - {name} - {unique_id} - {relay_time}")
+    def __init__(self, hub, name, relay_port, relay_time, relay_active_low, relay_bias, relay_drive,
+                 state_port, state_bias, state_active_low, unique_id):
+        _LOGGER.debug(f"GPIODCover init: {relay_port}:{state_port} - {name} - {unique_id} - {relay_time}")
         self._hub = hub
-        self._attr_name = name
-        self._relay_pin = relay_pin
+        self.name = name
+        self._relay_port = relay_port
         self._relay_time = relay_time
-        self._invert_relay = invert_relay
-        self._bias = bias
-        self._drive = drive
-        self._state_pin = state_pin
-        self._state_pull_mode = state_pull_mode
-        self._invert_state = invert_state
-        self._attr_unique_id = unique_id
-        self._is_closed = False != invert_state
-        hub.add_cover(self, relay_pin, invert_relay, bias, drive,
-                      state_pin, state_pull_mode, invert_state)
-
-    @property
-    def name(self) -> str:
-        return self._attr_name
-
-    @property
-    def unique_id(self) -> str:
-        return self._attr_unique_id
-
-    @property
-    def is_closed(self):
-        return self._is_closed
+        self._relay_active_low = relay_active_low
+        self._relay_bias = relay_bias
+        self._relay_drive = relay_drive
+        self._state_port = state_port
+        self._state_bias = state_bias
+        self._start_active_low = state_active_low
+        self.unique_id = unique_id
+        self._attr_is_closed = False != state_active_low
+        hub.add_cover(self, relay_port, relay_active_low, relay_bias, relay_drive,
+                      state_port, state_bias, state_active_low)
 
     def update(self):
-        self._is_closed = self._hub.update(self._state_pin)
+        self.is_closed = self._hub.update(self._state_port)
         self.schedule_update_ha_state(False)
 
     def close_cover(self, **kwargs):
-        if self._is_closed:
+        if self.is_closed:
             return
-        self._hub.turn_on(self._relay_pin)
+        self._hub.turn_on(self._relay_port)
         self.is_closing = True
+        # self.is_closed = None
         self.schedule_update_ha_state(False)
         sleep(self._relay_time/1000)
         if not self.is_closing:
             # closing stopped
             return
-        self._hub.turn_off(self._relay_pin)
+        self._hub.turn_off(self._relay_port)
         self.is_closing = False
-        self.schedule_update_ha_state(False)
+        self.update()
 
     def open_cover(self, **kwargs):
-        if not self._is_closed:
+        if not self.is_closed:
             return
-        self._hub.turn_on(self._relay_pin)
+        self._hub.turn_on(self._relay_port)
         self.is_opening = True
+        # self.is_closed = None
         self.schedule_update_ha_state(False)
         sleep(self._relay_time/1000)
         if not self.is_opening:
             # opening stopped
             return
-        self._hub.turn_off(self._relay_pin)
+        self._hub.turn_off(self._relay_port)
         self.is_opening = False
-        self.schedule_update_ha_state(False)
+        self.update()
 
     def stop_cover(self, **kwargs):
         if not (self.is_closing or self.is_opening):
             return
-        self._hub.turn_off(self._relay_pin)
+        self._hub.turn_off(self._relay_port)
         self.is_opening = False
         self.is_closing = False
-        self._is_closed = None
         self.schedule_update_ha_state(False)

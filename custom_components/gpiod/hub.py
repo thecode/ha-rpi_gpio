@@ -23,7 +23,7 @@ BIAS = {
     "OFF": Bias.DISABLED, 
     "AS_IS": Bias.AS_IS
 }
-DRIVE_MODE = { 
+DRIVE = { 
     "OPEN_DRAIN": Drive.OPEN_DRAIN, 
     "OPEN_SOURCE": Drive.OPEN_SOURCE, 
     "PUSH_PULL": Drive.PUSH_PULL, 
@@ -44,7 +44,7 @@ class Hub:
         self._hass = hass
         self._online = False
         self._config = defaultdict(gpiod.LineSettings)
-        self._lines = None
+        self._lines = type(gpiod.LineRequest)
         self._edge_events = False
         self._listener = None
         self._entities = {}
@@ -160,7 +160,7 @@ class Hub:
         self._config[port].output_value = Value.INACTIVE
         self._config[port].active_low = invert_logic
         self._config[port].bias = BIAS[bias]
-        self._config[port].drive = BIAS[drive]
+        self._config[port].drive = DRIVE[drive]
 
     def turn_on(self, port) -> None:
         _LOGGER.debug(f"in turn_on")

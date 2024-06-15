@@ -35,13 +35,15 @@ switch:
         unique_id: "gpio_led_red_2"
       - name: "Led 3 yellow"
         port: 22
-        invert_logic: true
+        active_low: true
       - name: "Led 4 yellow"
         port: 10
       - name: "Led 5 green"
         port: 9
       - name: "Led 6 green"
         port: 11
+        bias: "AS_IS"
+        drive: "PUSH_PULL"
       - name: "Buzzer"
         port: 8
 
@@ -54,9 +56,9 @@ binary_sensor:
 cover:
   - platform: gpiod
     covers:
-      - relay_pin: 4
+      - relay_port: 4
         name: Cover blue
-        state_pin: 7
+        state_port: 7
         relay_time: 1200
  ```
 
@@ -80,8 +82,10 @@ Key | Required | Default | Type | Description
 `port` | yes | | integer | the GPIO port to be used
 `unique_id` | no | generated | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
 `debounce` | no | `50` | integer | The time in milliseconds for port debouncing
-`invert_logic` | no | `false` | boolean | If `true`, inverts the output logic to ACTIVE LOW
-`pull_mode` | no | `UP` | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor
+`active_low` | no | `false` | boolean | If `true`, input of `gpio` is inverted, `active_low` results in `on`
+`invert_logic` | deprecated | `false` | boolean | see `active_low`, will be removed in future release
+`bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
+`pull_mode` | deprecated | `PULL_UP` | string  | see `bias`, will be removed in future release
 
 
 ## Switch
@@ -97,9 +101,10 @@ Key | Required | Default | Type | Description
 `name` | yes | | string | The name for the switch entity
 `port` | yes | | integer | the GPIO port to be used
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
-`invert_logic` | no | `false` | boolean | If true, inverts the output logic to ACTIVE LOW
-`bias`|no|`AS_IS`|string|set `relay_pin` bias, options: `PULL_UP`, `PULL_DOWN`, `DISABLED`, `AS_IS`
-`drive`|no|`PULL_UP`|string|set `relay_pin`drive, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
+`active_low` | no | `false` | boolean | If `true`, output of `gpio` is inverted, `active_low` switches `on`
+`invert_logic` | deprecated | `false` | boolean | see `active_low`, will be removed in future release
+`bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
+`drive`|no|`PULL_UP`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
 
 ## Cover
 
@@ -110,17 +115,24 @@ The `gpiod` cover platform allows you to control GPIOs to open/close covers; not
 Key | Required | Default | Type | Description
 -- | -- | -- | -- | --
 `name` | yes | | string | The name for the cover entity
-`relay_pin`|yes| |integer|Relay switch pin switching cover motor
+`relay_port`|yes| |integer|Relay switch gpio switching cover motor
+`relay_pin`|deprecated| |integer|see `relay_port`, will be removed in future release
 `relay_time`|no|`200` |integer|Time in milliseconds relay switch will be switched to open/close cover
-`invert_relay`|no | `false`| boolean| invert logic for relay pin
-`bias`|no|`AS_IS`|string|set `relay_pin` bias, options: `PULL_UP`, `PULL_DOWN`, `DISABLED`, `AS_IS`
-`drive`|no|`PULL_UP`|string|set `relay_pin`drive, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
-`state_pin`|yes| | integer|State pin sharing opened/closed status of cover
-`state_pull_mode`|no|`UP`|string|pull_mode for state trigger
-`invert_state`|no|`true`|boolean|invert logic for state pin
+`relay_active_low` | no | `false` | boolean | If `true`, output of `relay_pin` is inverted, `active_low` switches `on`
+`relay_active_low`|no | `false`| boolean| invert input for relay pin
+`invert_relay`|deprecated| `false`| boolean|see `relay_active_low`, will be removed in future release
+`relay_bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
+`relay_drive`|no|`PULL_UP`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
+`state_port`|yes| | integer|State port for opened/closed status of cover
+`state_pin`|deprecated| | integer|see `state_port`, will be removed in future release
+`state_bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
+`state_pull_mode`|deprecated|`UP`|string|see `state_bias`, will be removed in future relesae
+`state_active_low`|no | `false`| boolean| invert output for state pin
+`invert_state`|deprecated|`true`|boolean|see `state_active_low`, will be removed in future release
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
     
 ## Add Debug info
+Before reporting issues please add this to your `configuration.yaml` `logger` section, check logs and report issue adding logging.
 ```yaml
 logger:
   default: info

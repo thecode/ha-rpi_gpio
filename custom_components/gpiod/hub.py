@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, EVENT_HOMEASSISTANT_START
 
 from collections import defaultdict
+from typing import Optional
 from datetime import timedelta
 import gpiod
 
@@ -18,9 +19,9 @@ from gpiod.line import Direction, Value, Bias, Drive, Edge, Clock
 EventType = gpiod.EdgeEvent.Type
 
 BIAS = { 
-    "UP": Bias.PULL_UP, 
-    "DOWN": Bias.PULL_DOWN, 
-    "OFF": Bias.DISABLED, 
+    "PULL_UP": Bias.PULL_UP, 
+    "PULL_DOWN": Bias.PULL_DOWN, 
+    "DISABLED": Bias.DISABLED, 
     "AS_IS": Bias.AS_IS
 }
 DRIVE = { 
@@ -44,7 +45,7 @@ class Hub:
         self._hass = hass
         self._online = False
         self._config = defaultdict(gpiod.LineSettings)
-        self._lines = type(gpiod.LineRequest)
+        self._lines : Optional[gpiod.LineRequest] = None
         self._edge_events = False
         self._listener = None
         self._entities = {}

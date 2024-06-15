@@ -83,9 +83,9 @@ Key | Required | Default | Type | Description
 `unique_id` | no | generated | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
 `debounce` | no | `50` | integer | The time in milliseconds for port debouncing
 `active_low` | no | `false` | boolean | If `true`, input of `gpio` is inverted, `active_low` results in `on`
-`invert_logic` | deprecated | `false` | boolean | see `active_low`, will be removed in future release
+`invert_logic` | *deprecated* | `false` | boolean | see `active_low`, will be removed in future release
 `bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
-`pull_mode` | deprecated | `PULL_UP` | string  | see `bias`, will be removed in future release
+`pull_mode` | *deprecated* | `PULL_UP` | string  | see `bias`, will be removed in future release
 
 
 ## Switch
@@ -102,7 +102,7 @@ Key | Required | Default | Type | Description
 `port` | yes | | integer | the GPIO port to be used
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
 `active_low` | no | `false` | boolean | If `true`, output of `gpio` is inverted, `active_low` switches `on`
-`invert_logic` | deprecated | `false` | boolean | see `active_low`, will be removed in future release
+`invert_logic` | *deprecated* | `false` | boolean | see `active_low`, will be removed in future release
 `bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
 `drive`|no|`PULL_UP`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
 
@@ -116,19 +116,19 @@ Key | Required | Default | Type | Description
 -- | -- | -- | -- | --
 `name` | yes | | string | The name for the cover entity
 `relay_port`|yes| |integer|Relay switch gpio switching cover motor
-`relay_pin`|deprecated| |integer|see `relay_port`, will be removed in future release
+`relay_pin`|*deprecated*| |integer|see `relay_port`, will be removed in future release
 `relay_time`|no|`200` |integer|Time in milliseconds relay switch will be switched to open/close cover
 `relay_active_low` | no | `false` | boolean | If `true`, output of `relay_pin` is inverted, `active_low` switches `on`
 `relay_active_low`|no | `false`| boolean| invert input for relay pin
-`invert_relay`|deprecated| `false`| boolean|see `relay_active_low`, will be removed in future release
+`invert_relay`|*deprecated*| `false`| boolean|see `relay_active_low`, will be removed in future release
 `relay_bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
 `relay_drive`|no|`PULL_UP`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
 `state_port`|yes| | integer|State port for opened/closed status of cover
-`state_pin`|deprecated| | integer|see `state_port`, will be removed in future release
+`state_pin`|*deprecated*| | integer|see `state_port`, will be removed in future release
 `state_bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
-`state_pull_mode`|deprecated|`UP`|string|see `state_bias`, will be removed in future relesae
+`state_pull_mode`|*deprecated*|`UP`|string|see `state_bias`, will be removed in future relesae
 `state_active_low`|no | `false`| boolean| invert output for state pin
-`invert_state`|deprecated|`true`|boolean|see `state_active_low`, will be removed in future release
+`invert_state`|*deprecated*|`true`|boolean|see `state_active_low`, will be removed in future release
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
     
 ## Add Debug info

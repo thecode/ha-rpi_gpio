@@ -84,7 +84,7 @@ Key | Required | Default | Type | Description
 `debounce` | no | `50` | integer | The time in milliseconds for port debouncing
 `active_low` | no | `false` | boolean | If `true`, input of `gpio` is inverted, `active_low` results in `on`
 `invert_logic` | *deprecated* | `false` | boolean | see `active_low`, will be removed in future release
-`bias` | no | `PULL_UP` | string  | control bias setting of GPIO, used to define the electrical state of a GPIO line when not actively driven; `PULL_UP` set weak pull-up resistor on the line, ensuring that the line is pulled to a high level (3.3V or 5V) when not actively driven; `PULL_DOWN` sets weak pull-down resistor to pull to low level (0V), `DISABLED` remains floating
+`bias` | no | `PULL_UP` | string  | control bias setting of GPIO, used to define the electrical state of a GPIO line when not actively driven; `PULL_UP` set weak pull-up resistor on the line, ensuring that the line is pulled to a high level (3.3V or 5V) when not actively driven; `PULL_DOWN` sets weak pull-down resistor to pull to low level (0V), `DISABLED` remains floating, `AS_IS` not changed
 `pull_mode` | *deprecated* | `PULL_UP` | string  | see `bias`, will be removed in future release
 
 
@@ -104,7 +104,7 @@ Key | Required | Default | Type | Description
 `active_low` | no | `false` | boolean | If `true`, output of `gpio` is inverted, `active_low` switches `on`
 `invert_logic` | *deprecated* | `false` | boolean | see `active_low`, will be removed in future release
 `bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor, `AS-IS` no change
-`pull_mode`|*deprecated*|`PULL_UP`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
+`pull_mode`|*deprecated*||string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
 `drive`|no| `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
 
 ## Cover
@@ -126,8 +126,8 @@ Key | Required | Default | Type | Description
 `relay_drive`|no|`PUSH_PULL`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PUSH_PULL`
 `state_port`|yes| | integer|State port for opened/closed status of cover
 `state_pin`|*deprecated*| | integer|see `state_port`, will be removed in future release
-`state_bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
-`state_pull_mode`|*deprecated*|`UP`|string|see `state_bias`, will be removed in future relesae
+`state_bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
+`state_pull_mode`|*deprecated*||string|see `state_bias`, will be removed in future relesae
 `state_active_low`|no | `false`| boolean| invert output for state pin
 `invert_state`|*deprecated*|`true`|boolean|see `state_active_low`, will be removed in future release
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config

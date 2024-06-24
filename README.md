@@ -104,7 +104,7 @@ Key | Required | Default | Type | Description
 `active_low` | no | `false` | boolean | If `true`, output of `gpio` is inverted, `active_low` switches `on`
 `invert_logic` | *retrofit* | | boolean | see `active_low`, might be removed in the future
 `bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor, `AS-IS` no change
-`pull_mode`|*retrofit*| |string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
+`pull_mode`|*retrofit*| |string|see `bias`, might be removed in the future
 `drive`|no| `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
 
 ## Cover

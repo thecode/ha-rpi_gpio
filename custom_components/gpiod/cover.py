@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import cached_property
 
 from . import DOMAIN
 
@@ -93,8 +94,6 @@ async def async_setup_platform(
 
 class GPIODCover(CoverEntity):
     should_poll = False
-    is_opening = False
-    is_closing = False
 
     def __init__(self, hub, name, relay_port, relay_time, relay_active_low, relay_bias, relay_drive,
                  state_port, state_bias, state_active_low, unique_id):

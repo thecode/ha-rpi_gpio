@@ -20,11 +20,13 @@ RPi5 | `/dev/gpiochip4`
 
 ## Sample config for the raspberry pi berryclip hat
 
-See also configuraton-example.yaml; note that below config shows most options, and can't be used as is, since `cover` reuses `switch` and `sensor` `ports`
+See also configuraton-example.yaml; note that below config shows most options, and can't be used as is, since `cover` reuses `switch` and `sensor` ports.
 ```yaml
+# setup gpiod chip; mostly not required
 gpiod:
   path: '/dev/gpiochip0'
 
+# Example of switches (eg switched leds or buzzer) with some sample parameters
 switch:
   - platform: gpiod
     switches:
@@ -36,10 +38,6 @@ switch:
       - name: "Led 3 yellow"
         port: 22
         active_low: true
-      - name: "Led 4 yellow"
-        port: 10
-      - name: "Led 5 green"
-        port: 9
       - name: "Led 6 green"
         port: 11
         bias: "AS_IS"
@@ -47,12 +45,14 @@ switch:
       - name: "Buzzer"
         port: 8
 
+# Example of binary_sensor (eg push button) setup
 binary_sensor:
   - platform: gpiod
     sensors:
     - name: "Button"
       port: 7
 
+# Example of cover setup
 cover:
   - platform: gpiod
     covers:
@@ -67,7 +67,7 @@ cover:
 Key | Required | Default | Type | Description
 -- | -- | -- | -- | --
 `gpiod` | only for path| | | `gpiod` platform config and initialization, only required when you need to specify a specific gpiodevice path (see path)
-`path` | no | discovered | string | path to gpio device, if not set autodiscovered
+`path` | no | discovered | string | path to gpio device, if not set auto discovered
 
 ## Binary Sensor
 

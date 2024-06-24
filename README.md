@@ -83,9 +83,9 @@ Key | Required | Default | Type | Description
 `unique_id` | no | generated | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
 `debounce` | no | `50` | integer | The time in milliseconds for port debouncing
 `active_low` | no | `false` | boolean | If `true`, input of `gpio` is inverted, `active_low` results in `on`
-`invert_logic` | *deprecated* | | boolean | see `active_low`, will be removed in future release
+`invert_logic` | *retrofit* | | boolean | see `active_low`, might be removed in the future
 `bias` | no | `PULL_UP` | string  | control bias setting of GPIO, used to define the electrical state of a GPIO line when not actively driven; `PULL_UP` set weak pull-up resistor on the line, ensuring that the line is pulled to a high level (3.3V or 5V) when not actively driven; `PULL_DOWN` sets weak pull-down resistor to pull to low level (0V), `DISABLED` remains floating, `AS_IS` not changed
-`pull_mode` | *deprecated* | | string  | see `bias`, will be removed in future release
+`pull_mode` | *retrofit* | | string  | see `bias`, might be removed in the future
 
 
 ## Switch
@@ -102,9 +102,9 @@ Key | Required | Default | Type | Description
 `port` | yes | | integer | the GPIO port to be used
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
 `active_low` | no | `false` | boolean | If `true`, output of `gpio` is inverted, `active_low` switches `on`
-`invert_logic` | *deprecated* | | boolean | see `active_low`, will be removed in future release
+`invert_logic` | *retrofit* | | boolean | see `active_low`, might be removed in the future
 `bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor, `AS-IS` no change
-`pull_mode`|*deprecated*| |string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
+`pull_mode`|*retrofit*| |string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PULL_UP`
 `drive`|no| `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
 
 ## Cover
@@ -117,22 +117,22 @@ Key | Required | Default | Type | Description
 -- | -- | -- | -- | --
 `name` | yes | | string | The name for the cover entity
 `relay_port`|yes| |integer|Relay switch gpio switching cover motor
-`relay_pin`|*deprecated*| |integer|see `relay_port`, will be removed in future release
+`relay_pin`|*retrofit*| |integer|see `relay_port`, might be removed in the future
 `relay_time`|no|`200` |integer|Time in milliseconds relay switch will be switched to open/close cover
 `relay_active_low`|no | `false`| boolean| invert input for `relay_port`
-`invert_relay`|*deprecated*| | boolean|see `relay_active_low`, will be removed in future release
+`invert_relay`|*retrofit*| | boolean|see `relay_active_low`, might be removed in the future
 `relay_bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
 `relay_drive`|no|`PUSH_PULL`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PUSH_PULL`
 `state_port`|yes| | integer|State port for opened/closed status of cover
-`state_pin`|*deprecated*| | integer|see `state_port`, will be removed in future release
+`state_pin`|*retrofit*| | integer|see `state_port`, might be removed in the future
 `state_bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
-`state_pull_mode`|*deprecated*| |string|see `state_bias`, will be removed in future relesae
+`state_pull_mode`|*retrofit*| |string|see `state_bias`, might be removed in the future
 `state_active_low`|no | `false`| boolean| invert output for state pin
-`invert_state`|*deprecated*| |boolean|see `state_active_low`, will be removed in future release
+`invert_state`|*retrofit*| |boolean|see `state_active_low`, might be removed in the future
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
     
-## Add Debug info
-Before reporting issues please add this to your `configuration.yaml` `logger` section, check logs and report issue adding logging.
+## Add Debug info and issue reporting
+*Before* reporting issues please add this to your `configuration.yaml` `logger` section, check logs and report issue adding logging.
 ```yaml
 logger:
   default: info

@@ -65,8 +65,8 @@ cover:
 ## Platform
 
 Key | Required | Default | Type | Description
--- | -- | -- | -- | --
-`gpiod` | only for path| | | `gpiod` platform config and initialization, only required when you need to specify a specific gpiodevice path (see path)
+--- | --- | --- | --- | ---
+`gpiod` | only for path|- |- | `gpiod` platform config and initialization, only required when you need to specify a specific gpiodevice path (see path)
 `path` | no | discovered | string | path to gpio device, if not set auto discovered
 
 ## Binary Sensor
@@ -76,7 +76,7 @@ The `gpiod` binary sensor platform allows you to read sensor values of the GPIOs
 ### Configuration options
 
 Key | Required | Default | Type | Description
--- | -- | -- | -- | --
+--- | --- | --- | --- | ---
 `sensors` | yes | | list | List of sensor IO ports ([Raspberry Pi BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))
 `name` | yes | | string  | The name for the binary sensor entity
 `port` | yes | | integer | the GPIO port to be used
@@ -96,7 +96,7 @@ The `gpiod` switch platform allows you to control the GPIOs of your device.
 ### Options
 
 Key | Required | Default | Type | Description
--- | -- | -- | -- | --
+--- | --- | --- | --- | ---
 `switches` | yes | | list | List of switch IO ports ([Raspberry Pi BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))
 `name` | yes | | string | The name for the switch entity
 `port` | yes | | integer | the GPIO port to be used
@@ -114,7 +114,7 @@ The `gpiod` cover platform allows you to control GPIOs to open/close covers; not
 ### Options
 
 Key | Required | Default | Type | Description
--- | -- | -- | -- | --
+--- | --- | --- | --- | ---
 `name` | yes | | string | The name for the cover entity
 `relay_port`|yes| |integer|Relay switch gpio switching cover motor
 `relay_pin`|*retrofit*| |integer|see `relay_port`, might be removed in the future

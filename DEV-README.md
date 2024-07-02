@@ -46,4 +46,14 @@ tail home-assistant.log
 
 ```
 
+## Documentation
+Pushing to github to verify the markdown was a bit tiresome, [mmark](https://mmark.miek.nl/) helps out, really nice cli markdown renderer.
 
+```bash
+# render to html
+mmark -html README.md > /tmp/mmark.html
+# or with styling
+mmark -css ~/Projects/markdown.css -html README.md > /tmp/mmark.html
+# open in default browser
+xdg-open /tmp/mmark.html
+```

@@ -27,7 +27,7 @@ PLATFORM_SCHEMA = vol.All(
         vol.Exclusive(CONF_SWITCHES, CONF_SWITCHES): vol.All(
             cv.ensure_list, [{
                 vol.Required(CONF_NAME): cv.string,
-                vol.Required(CONF_PORT): vol.In(list(range(1,40))),
+                vol.Required(CONF_PORT): cv.positive_int,
                 vol.Optional(CONF_UNIQUE_ID): cv.string,
                 vol.Optional(CONF_ACTIVE_LOW): cv.boolean,
                 vol.Optional("invert_logic"): cv.boolean, # backwards compatibility for now

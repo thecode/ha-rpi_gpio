@@ -40,15 +40,15 @@ PLATFORM_SCHEMA = vol.All(
             vol.Exclusive(CONF_COVERS, CONF_COVERS): vol.All(
                 cv.ensure_list, [{
                     vol.Required(CONF_NAME): cv.string,
-                    vol.Optional(CONF_RELAY_PORT): vol.In(list(range(1,40))),
-                    vol.Optional("relay_pin"): vol.In(list(range(1,40))), # backwards compatibility for now
+                    vol.Optional(CONF_RELAY_PORT): cv.positive_int,
+                    vol.Optional("relay_pin"): cv.positive_int, # backwards compatibility for now
                     vol.Optional(CONF_RELAY_TIME, default=DEFAULT_RELAY_TIME): cv.positive_int,
                     vol.Optional(CONF_RELAY_ACTIVE_LOW): cv.boolean,
                     vol.Optional("invert_relay"): cv.boolean, # backwards compatibility for now
                     vol.Optional(CONF_RELAY_BIAS, default=DEFAULT_RELAY_BIAS): vol.In(BIAS.keys()),
                     vol.Optional(CONF_RELAY_DRIVE, default=DEFAULT_RELAY_DRIVE): vol.In(DRIVE.keys()),
-                    vol.Optional(CONF_STATE_PORT): vol.In(list(range(1,40))),
-                    vol.Optional("state_pin"): vol.In(list(range(1,40))),  # backwards compatibility for now
+                    vol.Optional(CONF_STATE_PORT): cv.positive_int,
+                    vol.Optional("state_pin"): cv.positive_int,  # backwards compatibility for now
                     vol.Optional(CONF_STATE_BIAS): vol.In(BIAS.keys()),
                     vol.Optional("state_pull_mode"): vol.In(BIAS.keys()), # backwards compatibility for now
                     vol.Optional(CONF_STATE_ACTIVE_LOW): cv.boolean,

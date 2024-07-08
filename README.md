@@ -7,8 +7,8 @@ This HACS integration is used to address GPIO (especially and only tested for Ra
 `ha_gpiod` is based on [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio), which was already adapted for `gpiod` in [ha-gpio](https://codeberg.org/raboof/ha-gpio) and rewritten from scratch by me ..
 
 # Installation
-Via HACS: add as custom repository from github using this github https://github.com/jdeneef/ha_gpiod/ (HACS => integrations => 3-dots menu => custom repositories, go back to hacs, install gpiod component, reboot, add config, reboot)
-
+Via HACS: add as custom repository from github using this github https://github.com/jdeneef/ha_gpiod/ (HACS => integrations => 3-dots menu => custom repositories, enter repository URL, select "Integrations" in Category drop-down, go back to hacs, install gpiod component, reboot, add config, reboot).  
+If you run into errors, ensure HACS is up-to-date, [re-install HACS](https://hacs.xyz/docs/setup/download) to update it if needed.
 # Usage
 The `gpiod` platform will be initialized using the path to the gpio chip. When path is not in the config `/dev/gpiochip[0-5]` are tested for a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`. So with a raspberry pi you should be OK to leave the path empty.
 

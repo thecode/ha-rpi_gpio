@@ -142,6 +142,7 @@ switch:
       - port: 11
         name: "Fan Office"
         unique_id: "fan_office_switch_port_11"
+        persistent: true
       - port: 12
         name: "Light Desk"
         unique_id: "light_desk_switch_port_12"
@@ -156,6 +157,7 @@ switch:
 | `name`         | yes      |         | string  | The name for the switch entity                                                                              |
 | `unique_id`    | no       |         | string  | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI |
 | `invert_logic` | no       | `false` | boolean | If true, inverts the output logic to ACTIVE LOW                                                             |
+| `persistent`   | no       | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash               |
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 

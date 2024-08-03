@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from . import DOMAIN
-from time import sleep
-LISTENER_WINDOW = 5
 
 import logging
 _LOGGER = logging.getLogger(__name__)
@@ -49,7 +47,6 @@ class Hub:
         self._lines : gpiod.line_request.LineRequest = None
         self._config = defaultdict(gpiod.LineSettings)
         self._edge_events = False
-        self._listener = None
         self._entities = {}
 
         if path:
@@ -93,7 +90,7 @@ class Hub:
         return True
 
 
-    def startup(self, _):
+    async def startup(self, _):
         """Stuff to do after starting."""
         _LOGGER.debug(f"startup {DOMAIN} hub")
         if not self._online:
@@ -110,16 +107,12 @@ class Hub:
             return
 
         _LOGGER.debug("Start listener")
-        self._listener = self._hass.create_task(self.listen())
+        await self.listen()
 
 
     def cleanup(self, _):
         """Stuff to do before stopping."""
         _LOGGER.debug(f"cleanup {DOMAIN} hub")
-        if self._listener:
-            self._listener.cancel()
-            # wait for loop time, give wait_edge_events some time
-            sleep(LISTENER_WINDOW)
         if self._config:
             self._config.clear()
         if self._lines:
@@ -146,17 +139,13 @@ class Hub:
             config = self._config
         )
 
+    def handle_events(self):
+        for event in self._lines.read_edge_events():
+            _LOGGER.debug(f"Event: {event}")
+            self._entities[event.line_offset].update()
+
     async def listen(self):
-        while True:
-            _LOGGER.debug("Listener loop")
-            events_available = await self._hass.async_add_executor_job(
-                self._lines.wait_edge_events,timedelta(seconds=LISTENER_WINDOW))
-            if events_available:
-                events = await self._hass.async_add_executor_job(
-                    self._lines.read_edge_events)
-                for event in events:
-                    _LOGGER.debug(f"Event: {event}")
-                    self._entities[event.line_offset].update()
+        self._hass.loop.add_reader(self._lines.fd, self.handle_events)
 
     def add_switch(self, entity, port, active_low, bias, drive) -> None:
         _LOGGER.debug(f"in add_switch {port}")

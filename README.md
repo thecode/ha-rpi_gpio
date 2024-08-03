@@ -9,13 +9,14 @@ This HACS integration is used to address GPIO (especially and only tested for Ra
 # Installation
 Via HACS: add as custom repository from github using this github https://github.com/jdeneef/ha_gpiod/ (HACS => integrations => 3-dots menu => custom repositories, enter repository URL, select "Integrations" in Category drop-down, go back to hacs, install gpiod component, reboot, add config, reboot).  
 If you run into errors, ensure HACS is up-to-date, [re-install HACS](https://hacs.xyz/docs/setup/download) to update it if needed.
+
 # Usage
 The `gpiod` platform will be initialized using the path to the gpio chip. When path is not in the config `/dev/gpiochip[0-5]` are tested for a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`. So with a raspberry pi you should be OK to leave the path empty.
 
 Raspberry Pi | GPIO Device
---- | ---
-RPi3, RPi4 | `/dev/gpiochip0`
-RPi5 | `/dev/gpiochip4`
+---          | ---
+RPi3, RPi4   | `/dev/gpiochip0`
+RPi5         | `/dev/gpiochip4`
 
 
 ## Sample config for the raspberry pi berryclip hat
@@ -140,3 +141,6 @@ logger:
     custom_components.gpiod: debug
 ```
 
+# Changelog
+
+Sat Aug  3; found a solution to drop the loop waiting for gpio events!

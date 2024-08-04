@@ -57,3 +57,12 @@ mmark -css ~/Projects/markdown.css -html README.md > /tmp/mmark.html
 # open in default browser
 xdg-open /tmp/mmark.html
 ```
+
+### Changelog
+
+```bash
+echo "# Changelog" > CHANGELOG.md
+echo "\`\`\`" >> CHANGELOG.md
+git log --graph --abbrev-commit --decorate --format=format:'%C(green)(%as)%C(reset) %C(yellow)%D%n%C(bold cyan)%<(70,trunc)%s%C(reset)' --all | head -20 >> CHANGELOG.md
+echo "\`\`\`" >> CHANGELOG.md
+```

@@ -140,8 +140,3 @@ logger:
   logs:
     custom_components.gpiod: debug
 ```
-
-# Changelog
-
-Sat Aug  3; found a solution to drop the loop waiting for gpio events!
-Sun Aug  4; config validation cleanups

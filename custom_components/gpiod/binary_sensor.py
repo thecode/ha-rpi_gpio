@@ -29,10 +29,8 @@ PLATFORM_SCHEMA = vol.All(
                 vol.Required(CONF_NAME): cv.string,
                 vol.Required(CONF_PORT): cv.positive_int,
                 vol.Optional(CONF_UNIQUE_ID): cv.string,
-                vol.Optional(CONF_ACTIVE_LOW): cv.boolean,
-                vol.Optional("invert_logic"): cv.boolean, # backwards compatibility for now
-                vol.Optional(CONF_BIAS): vol.In(BIAS.keys()),
-                vol.Optional("pull_mode"): cv.boolean, # backwards compatibility for now
+                vol.Optional(vol.Any(CONF_ACTIVE_LOW, "invert_logic")): cv.boolean,
+                vol.Optional(vol.Any(CONF_BIAS, "pull_mode")): vol.In(BIAS.keys()),
                 vol.Optional(CONF_DEBOUNCE, default=DEFAULT_DEBOUNCE): cv.positive_int
             }]
         )

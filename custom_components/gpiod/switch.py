@@ -29,8 +29,7 @@ PLATFORM_SCHEMA = vol.All(
                 vol.Required(CONF_NAME): cv.string,
                 vol.Required(CONF_PORT): cv.positive_int,
                 vol.Optional(CONF_UNIQUE_ID): cv.string,
-                vol.Optional(CONF_ACTIVE_LOW): cv.boolean,
-                vol.Optional("invert_logic"): cv.boolean, # backwards compatibility for now
+                vol.Optional(vol.Any(CONF_ACTIVE_LOW, "invert_logic")): cv.boolean,
                 vol.Optional(CONF_BIAS, default=DEFAULT_BIAS): vol.In(BIAS.keys()),
                 vol.Optional(CONF_DRIVE, default=DEFAULT_DRIVE): vol.In(DRIVE.keys()) 
             }]
@@ -38,12 +37,11 @@ PLATFORM_SCHEMA = vol.All(
     })
 )
 
-
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     async_add_entities: AddEntitiesCallback,
-        discovery_info: DiscoveryInfoType | None = None) -> None:
+    discovery_info: DiscoveryInfoType | None = None) -> None:
 
     _LOGGER.debug(f"setup_platform: {config}")
     hub = hass.data[DOMAIN]

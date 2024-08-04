@@ -60,9 +60,8 @@ xdg-open /tmp/mmark.html
 
 ### Changelog
 
+To generate changelog with commit message use `git lt`, which is:
+
 ```bash
-echo "# Changelog" > CHANGELOG.md
-echo "\`\`\`" >> CHANGELOG.md
-git log --graph --abbrev-commit --decorate --format=format:'%C(green)(%as)%C(reset) %C(yellow)%D%n%C(bold cyan)%<(70,trunc)%s%C(reset)' --all | head -20 >> CHANGELOG.md
-echo "\`\`\`" >> CHANGELOG.md
+git log --graph --abbrev-commit --decorate --format=format:'%C(green)(%as)%C(reset) %C(yellow)%D%n%C(bold cyan)%<(70,trunc)%s%C(reset)' --all
 ```

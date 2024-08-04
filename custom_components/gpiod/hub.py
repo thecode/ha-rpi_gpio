@@ -8,7 +8,7 @@ _LOGGER = logging.getLogger(__name__)
 from homeassistant.core import HomeAssistant
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, EVENT_HOMEASSISTANT_START
 
-from collections import defaultdict
+from typing import Dict
 from datetime import timedelta
 import gpiod
 
@@ -40,27 +40,28 @@ class Hub:
         _LOGGER.debug(f"in hub.__init__ path: {path}")
 
         self._path = path
+        self._chip = None
         self._name = path
         self._id = path
         self._hass = hass
         self._online = False
-        self._lines : gpiod.line_request.LineRequest = None
-        self._config = defaultdict(gpiod.LineSettings)
+        self._lines : gpiod.LineRequest =  None
+        self._config : Dict[int, gpiod.LineSettings] = {}
         self._edge_events = False
         self._entities = {}
 
         if path:
             # use config
-            self._online = self.verify_gpiochip(path)
-            if self._online:
+            if self.verify_gpiochip(path):
+                self._online = True
                 self._path = path
         else:
             # discover
             for d in [0,4,1,2,3,5]:
                 # rpi3,4 using 0. rpi5 using 4
                 path = f"/dev/gpiochip{d}"
-                self._online = self.verify_gpiochip(path)
-                if self._online:
+                if self.verify_gpiochip(path):
+                    self._online = True
                     self._path = path
                     break
 
@@ -107,7 +108,7 @@ class Hub:
             return
 
         _LOGGER.debug("Start listener")
-        await self.listen()
+        self._hass.loop.add_reader(self._lines.fd, self.handle_events)
 
 
     def cleanup(self, _):
@@ -144,17 +145,16 @@ class Hub:
             _LOGGER.debug(f"Event: {event}")
             self._entities[event.line_offset].update()
 
-    async def listen(self):
-        self._hass.loop.add_reader(self._lines.fd, self.handle_events)
-
     def add_switch(self, entity, port, active_low, bias, drive) -> None:
         _LOGGER.debug(f"in add_switch {port}")
         self._entities[port] = entity
-        self._config[port].direction = Direction.OUTPUT
-        self._config[port].output_value = Value.INACTIVE
-        self._config[port].active_low = active_low
-        self._config[port].bias = BIAS[bias]
-        self._config[port].drive = DRIVE[drive]
+        self._config[port] = gpiod.LineSettings(
+            direction = Direction.OUTPUT,
+            bias = BIAS[bias],
+            drive = DRIVE[drive],
+            active_low = active_low,
+            output_value = Value.INACTIVE,
+        )
 
     def turn_on(self, port) -> None:
         _LOGGER.debug(f"in turn_on")
@@ -167,12 +167,14 @@ class Hub:
     def add_sensor(self, entity, port, active_low, bias, debounce) -> None:
         _LOGGER.debug(f"in add_sensor {port}")
         self._entities[port] = entity
-        self._config[port].direction = Direction.INPUT
-        self._config[port].active_low = active_low
-        self._config[port].bias = BIAS[bias]
-        self._config[port].debounce_period = timedelta(milliseconds=debounce)
-        self._config[port].edge_detection = Edge.BOTH
-        self._config[port].event_clock = Clock.REALTIME
+        self._config[port] = gpiod.LineSettings(
+            direction = Direction.INPUT,
+            edge_detection = Edge.BOTH,
+            bias = BIAS[bias],
+            active_low = active_low,
+            debounce_period = timedelta(milliseconds=debounce),
+            event_clock = Clock.REALTIME,
+        )
         self._edge_events = True
 
     def update(self, port, **kwargs):

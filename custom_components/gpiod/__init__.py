@@ -12,21 +12,12 @@ from .hub import Hub
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 
-from homeassistant.const import (
-    Platform,
-    CONF_PATH
-)
-
-PLATFORMS = [
-    Platform.BINARY_SENSOR,
-    Platform.COVER,
-    Platform.SWITCH,
-]
+from homeassistant.const import CONF_PATH
 
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema({
-            vol.Optional(CONF_PATH): cv.string
+            vol.Optional(CONF_PATH): vol.All(cv.string, vol.PathExists())
         })
     },
     extra=vol.ALLOW_EXTRA

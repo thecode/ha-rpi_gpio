@@ -45,6 +45,7 @@ switch:
         drive: "PUSH_PULL"
       - name: "Buzzer"
         port: 8
+        persistent: true
 
 # Example of binary_sensor (eg push button) setup
 binary_sensor:
@@ -107,6 +108,7 @@ Key | Required | Default | Type | Description
 `bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor, `AS-IS` no change
 `pull_mode`|*backwards compatibility*| |string|see `bias`, might be removed in the future
 `drive`|no| `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
+`persistent` | no | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash.
 
 ## Cover
 

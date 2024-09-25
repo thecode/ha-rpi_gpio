@@ -43,7 +43,7 @@ switch:
         port: 11
         bias: "AS_IS"
         drive: "PUSH_PULL"
-      - name: "Buzzer"
+      - name: "Fan"
         port: 8
         persistent: true
 

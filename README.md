@@ -4,6 +4,8 @@
 
 The `rpi_gpio` integration supports the following platforms: `Binary Sensor`, `Cover`, `Switch`
 
+`rpi_gpio` is based on `gpiod` in [ha-gpio](https://codeberg.org/raboof/ha-gpio) and `ha_gpiod` in [ha_gpiod](https://github.com/jdeneef/ha_gpiod)
+
 # Installation
 
 ### HACS

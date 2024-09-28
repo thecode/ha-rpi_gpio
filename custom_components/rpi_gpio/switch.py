@@ -14,10 +14,10 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import CONF_SWITCHES, CONF_NAME, CONF_PORT, CONF_UNIQUE_ID, STATE_ON
 from homeassistant.helpers.restore_state import RestoreEntity
 from .hub import BIAS, DRIVE
-CONF_ACTIVE_LOW ="active_low"
-DEFAULT_ACTIVE_LOW = False
-CONF_BIAS="bias"
-DEFAULT_BIAS = "AS_IS"
+CONF_INVERT_LOGIC = "invert_logic"
+DEFAULT_INVERT_LOGIC = False
+CONF_PULL_MODE="pull_mode"
+DEFAULT_PULL_MODE = "AS_IS"
 CONF_DRIVE ="drive"
 DEFAULT_DRIVE = "PUSH_PULL"
 CONF_PERSISTENT = "persistent"
@@ -33,8 +33,8 @@ PLATFORM_SCHEMA = vol.All(
                 vol.Required(CONF_NAME): cv.string,
                 vol.Required(CONF_PORT): cv.positive_int,
                 vol.Optional(CONF_UNIQUE_ID): cv.string,
-                vol.Optional(vol.Any(CONF_ACTIVE_LOW, "invert_logic")): cv.boolean,
-                vol.Optional(CONF_BIAS, default=DEFAULT_BIAS): vol.In(BIAS.keys()),
+                vol.Optional(CONF_INVERT_LOGIC, default=DEFAULT_INVERT_LOGIC): cv.boolean,
+                vol.Optional(CONF_PULL_MODE, default=DEFAULT_PULL_MODE): vol.In(BIAS.keys()),
                 vol.Optional(CONF_DRIVE, default=DEFAULT_DRIVE): vol.In(DRIVE.keys()), 
                 vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
             }]
@@ -56,31 +56,18 @@ async def async_setup_platform(
 
     switches = []
     for switch in config.get(CONF_SWITCHES):
-        # if switch[CONF_PERSISTENT]:
-            # switches.append(
-                # PersistentRPiGPIOSwitch(
-                    # hub,
-                    # switch[CONF_NAME],
-                    # switch[CONF_PORT],
-                    # switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
-                    # switch.get(CONF_ACTIVE_LOW) or switch.get("invert_logic") or DEFAULT_ACTIVE_LOW,
-                    # switch.get(CONF_BIAS),
-                    # switch.get(CONF_DRIVE)
-                # )
-            # )
-        # else:
-            switches.append(
-                GPIODSwitch(
-                    hub,
-                    switch[CONF_NAME],
-                    switch[CONF_PORT],
-                    switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
-                    switch.get(CONF_ACTIVE_LOW) or switch.get("invert_logic") or DEFAULT_ACTIVE_LOW,
-                    switch.get(CONF_BIAS),
-                    switch.get(CONF_DRIVE),
-                    switch[CONF_PERSISTENT]
-                )
+        switches.append(
+            GPIODSwitch(
+                hub,
+                switch[CONF_NAME],
+                switch[CONF_PORT],
+                switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
+                switch.get(CONF_INVERT_LOGIC),
+                switch.get(CONF_PULL_MODE),
+                switch.get(CONF_DRIVE),
+                switch[CONF_PERSISTENT]
             )
+        )
 
     async_add_entities(switches)
 
@@ -126,18 +113,4 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
     def update(self):
         self.is_on = self._hub.update(self._port)
         self.schedule_update_ha_state(False)
-
-
-# class PersistentRPiGPIOSwitch(GPIODSwitch, RestoreEntity):
-    # async def async_added_to_hass(self) -> None:
-        # """Call when the switch is added to hass."""
-        # await super().async_added_to_hass()
-        # state = await self.async_get_last_state()
-        # _LOGGER.debug(f"recovering state: {state}")
-        # if not state:
-            # return
-        # self.is_on = True if state.state == STATE_ON else False
-        # if self.is_on:
-            # await self.async_turn_on()
-        # else:
-            # await self.async_turn_off()
+        

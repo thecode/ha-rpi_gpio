@@ -77,16 +77,11 @@ binary_sensor:
 | -------------- | -------- | --------------------- | --------|------------------------------------------------------------------------------------------------------------ |
 | `sensors`      | yes      |                       | list    | List of sensor IO ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
 | `name`         | yes      |                       | string  | The name for the binary sensor entity                                                                       |
-| `port`         | yes      |                       | integer | the GPIO port to be used
+| `port`         | yes      |                       | integer | the GPIO port to be used                                                                                    |
 | `unique_id`    | no       |                       | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI |
 | `bouncetime`   | no       | `50`                  | integer | The time in milliseconds for port debouncing                                                                |
 | `invert_logic` | no       | `false` (ACTIVE HIGH) | boolean | If `true`, inverts the output logic to ACTIVE LOW                                                           |
-| `pull_mode`    | no       | `UP`                  | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor                 |
-`debounce` | no | `50` | integer | The time in milliseconds for port debouncing
-`active_low` | no | `false` | boolean | If `true`, input of `gpio` is inverted, `active_low` results in `on`
-`invert_logic` | *backwards compatibility* | | boolean | see `active_low`, might be removed in the future
-`bias` | no | `PULL_UP` | string  | control bias setting of GPIO, used to define the electrical state of a GPIO line when not actively driven; `PULL_UP` set weak pull-up resistor on the line, ensuring that the line is pulled to a high level (3.3V or 5V) when not actively driven; `PULL_DOWN` sets weak pull-down resistor to pull to low level (0V), `DISABLED` remains floating, `AS_IS` not changed
-`pull_mode` | *backwards compatibility* | | string  | see `bias`, might be removed in the future
+| `pull_mode`    | no       | `UP`                  | string  | control bias setting of GPIO, used to define the electrical state of a GPIO line when not actively driven; `UP` set weak pull-up resistor on the line, ensuring that the line is pulled to a high level (3.3V or 5V) when not actively driven; `DOWN` sets weak pull-down resistor to pull to low level (0V), `DISABLED` remains floating, `AS_IS` not changed                 |
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 
@@ -204,19 +199,13 @@ switch:
 | -------------- | -------- | ------- | --------| ----------------------------------------------------------------------------------------------------------- |
 | `switches`     | yes      |         | list    | List of switch IO ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
 | `name`         | yes      |         | string  | The name for the switch entity                                                                              |
-| `unique_id`    | no       |         | string  | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI |
+| `port`         | yes      |         | integer | the GPIO port to be used                                                                                    |
+| `unique_id`    | no       |         | string  | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config |
 | `invert_logic` | no       | `false` | boolean | If true, inverts the output logic to ACTIVE LOW                                                             |
 | `persistent`   | no       | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash               |
-`switches` | yes | | list | List of switch IO ports ([Raspberry Pi BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))
-`name` | yes | | string | The name for the switch entity
-`port` | yes | | integer | the GPIO port to be used
-`unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
-`active_low` | no | `false` | boolean | If `true`, output of `gpio` is inverted, `active_low` switches `on`
-`invert_logic` | *backwards compatibility* | | boolean | see `active_low`, might be removed in the future
-`bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor, `AS-IS` no change
-`pull_mode`|*backwards compatibility*| |string|see `bias`, might be removed in the future
-`drive`|no| `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
-`persistent` | no | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash.
+| `pull_mode`    | no       | `AS_IS` | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor, `AS-IS` no change |
+| `drive`        |no        | `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
+|`persistent`    | no       | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash.              |
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 

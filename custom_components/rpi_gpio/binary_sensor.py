@@ -12,12 +12,12 @@ from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import CONF_SENSORS, CONF_NAME, CONF_PORT, CONF_UNIQUE_ID
 from .hub import BIAS
-CONF_ACTIVE_LOW = "active_low"
-DEFAULT_ACTIVE_LOW = False
-CONF_BIAS = "bias"
-DEFAULT_BIAS = "PULL_UP"
-CONF_DEBOUNCE= "debounce"
-DEFAULT_DEBOUNCE = 50
+CONF_INVERT_LOGIC = "invert_logic"
+DEFAULT_INVERT_LOGIC = False
+CONF_BOUNCETIME = "bouncetime"
+DEFAULT_BOUNCETIME = 50
+CONF_PULL_MODE = "pull_mode"
+DEFAULT_PULL_MODE = "UP"
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -28,10 +28,10 @@ PLATFORM_SCHEMA = vol.All(
             cv.ensure_list, [{
                 vol.Required(CONF_NAME): cv.string,
                 vol.Required(CONF_PORT): cv.positive_int,
+                vol.Optional(CONF_PULL_MODE, default=DEFAULT_PULL_MODE): cv.string,
+                vol.Optional(CONF_BOUNCETIME, default=DEFAULT_BOUNCETIME): cv.positive_int,
+                vol.Optional(CONF_INVERT_LOGIC, default=DEFAULT_INVERT_LOGIC): cv.boolean,
                 vol.Optional(CONF_UNIQUE_ID): cv.string,
-                vol.Optional(vol.Any(CONF_ACTIVE_LOW, "invert_logic")): cv.boolean,
-                vol.Optional(vol.Any(CONF_BIAS, "pull_mode")): vol.In(BIAS.keys()),
-                vol.Optional(CONF_DEBOUNCE, default=DEFAULT_DEBOUNCE): cv.positive_int
             }]
         )
     })
@@ -57,9 +57,9 @@ async def async_setup_platform(
                 sensor[CONF_NAME],
                 sensor[CONF_PORT],
                 sensor.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{sensor[CONF_PORT]}_{sensor[CONF_NAME].lower().replace(' ', '_')}",
-                sensor.get(CONF_ACTIVE_LOW) or sensor.get("invert_logic") or DEFAULT_ACTIVE_LOW,
-                sensor.get(CONF_BIAS) or sensor.get("pull_mode") or DEFAULT_BIAS,
-                sensor.get(CONF_DEBOUNCE)
+                sensor.get(CONF_INVERT_LOGIC),
+                sensor.get(CONF_PULL_MODE),
+                sensor.get(CONF_BOUNCETIME)
             )
         )
 

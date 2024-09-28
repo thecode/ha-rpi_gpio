@@ -16,12 +16,9 @@ from gpiod.line import Direction, Value, Bias, Drive, Edge, Clock
 EventType = gpiod.EdgeEvent.Type
 
 BIAS = { 
-    "PULL_UP": Bias.PULL_UP, 
-    "PULL_DOWN": Bias.PULL_DOWN,
-    "UP": Bias.PULL_UP,
+    "UP": Bias.PULL_UP, 
     "DOWN": Bias.PULL_DOWN,
     "DISABLED": Bias.DISABLED,
-    "OFF": Bias.DISABLED,
     "AS_IS": Bias.AS_IS,
 }
 DRIVE = { 

@@ -43,8 +43,9 @@ switch:
         port: 11
         bias: "AS_IS"
         drive: "PUSH_PULL"
-      - name: "Buzzer"
+      - name: "Fan"
         port: 8
+        persistent: true
 
 # Example of binary_sensor (eg push button) setup
 binary_sensor:
@@ -72,7 +73,7 @@ Key | Required | Default | Type | Description
 
 ## Binary Sensor
 
-The `gpiod` binary sensor platform allows you to read sensor values of the GPIOs of your device.
+The `gpiod` binary sensor platform allows you to read sensor values of the GPIOs of your device. To ensure consistence over reboots the sensor status is read at startup and set accordingly.
 
 ### Configuration options
 
@@ -91,7 +92,7 @@ Key | Required | Default | Type | Description
 
 ## Switch
 
-The `gpiod` switch platform allows you to control the GPIOs of your device.
+The `gpiod` switch platform allows you to control the GPIOs of your device. To ensure consistence over restarts the `persistent` flag should be set.
 
 
 ### Options
@@ -107,10 +108,12 @@ Key | Required | Default | Type | Description
 `bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor, `AS-IS` no change
 `pull_mode`|*backwards compatibility*| |string|see `bias`, might be removed in the future
 `drive`|no| `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
+`persistent` | no | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash.
 
 ## Cover
 
-The `gpiod` cover platform allows you to control GPIOs to open/close covers; note that I have only verified cover functionality simulating with switches and buttons, so logic could be off on some points ..
+The `gpiod` cover platform allows you to control GPIOs to open/close covers; note that I have only verified cover functionality simulating with switches and buttons, so logic could be off on some points .. 
+Covers consist of a switch for triggering cover motor, and a state sensor for determining the state of the cover. This state is as for all sensors read at startup time, so should be consistent over reboots.
 
 ### Options
 
@@ -131,9 +134,6 @@ Key | Required | Default | Type | Description
 `state_active_low`|no | `false`| boolean| invert output for state pin
 `invert_state`|*backwards compatibility*| |boolean|see `state_active_low`, might be removed in the future
 `unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
-
-# Possible issues
-- in v1.2.5, the Added functionality: read GPIO states at homeassistant restart (not reboot of host/machine!), keeping state over restart, can have a possible side effect: Devices returning wrong state eg due to floating (not biased) might be set incorrectly at initialization. Eg floating to `on`. This can result in initialization to `on` even though it was `off` before restart. In my case I had to add `bias: PULL_DOWN` for my buzzer GPIO in order to avoid alarm at every homeassistant restart (on my dev rpi)
 
 
 # Add Debug info and issue reporting

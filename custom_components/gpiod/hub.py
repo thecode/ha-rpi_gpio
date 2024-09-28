@@ -101,8 +101,8 @@ class Hub:
         self.update_lines()
 
         # read initial states for sensors
-        for port in self._config:
-            self._entities[port].update()
+        # for port in self._config:
+            # self._entities[port].update()
 
         if not self._edge_events:
             return
@@ -147,22 +147,25 @@ class Hub:
             _LOGGER.debug(f"Event: {event}")
             self._entities[event.line_offset].update()
 
-    def add_switch(self, entity, port, active_low, bias, drive) -> None:
+    def add_switch(self, entity, port, active_low, bias, drive_mode) -> None:
         _LOGGER.debug(f"in add_switch {port}")
         # read current status of the lines
-        line = self._chip.request_lines({ port: {} })
-        value = True if line.get_value(port) == Value.ACTIVE else False
-        line.release()
-        _LOGGER.debug(f"current value for port {port}: {value}, output_value: {value ^ active_low}")
+        # line = self._chip.request_lines({ port: {} })
+        # value = True if line.get_value(port) == Value.ACTIVE else False
+        # line.release()
+        # _LOGGER.debug(f"current value for port {port}: {value}, output_value: {value ^ active_low}")
 
         self._entities[port] = entity
         self._config[port] = gpiod.LineSettings(
             direction = Direction.OUTPUT,
             bias = BIAS[bias],
-            drive = DRIVE[drive],
+            drive = DRIVE[drive_mode],
             active_low = active_low,
-            output_value = Value.ACTIVE if value ^ active_low else Value.INACTIVE,
+            output_value = Value.ACTIVE if entity.is_on else Value.INACTIVE
+            # output_value = Value.ACTIVE if value ^ active_low else Value.INACTIVE,
+            # output_value = Value.INACTIVE
         )
+        # self.update_lines()
 
     def turn_on(self, port) -> None:
         _LOGGER.debug(f"in turn_on")
@@ -174,11 +177,12 @@ class Hub:
 
     def add_sensor(self, entity, port, active_low, bias, debounce) -> None:
         _LOGGER.debug(f"in add_sensor {port}")
-        # read current status of the lines
+        # read current status of the sensor
         line = self._chip.request_lines({ port: {} })
         value = True if line.get_value(port) == Value.ACTIVE else False
+        entity.is_on = True if value ^ active_low else False
         line.release()
-        _LOGGER.debug(f"current value for port {port}: {value}, output_value: {value ^ active_low}")
+        _LOGGER.debug(f"current value for port {port}: {entity.is_on}")
 
         self._entities[port] = entity
         self._config[port] = gpiod.LineSettings(
@@ -188,9 +192,10 @@ class Hub:
             active_low = active_low,
             debounce_period = timedelta(milliseconds=debounce),
             event_clock = Clock.REALTIME,
-            output_value = Value.ACTIVE if value ^ active_low else Value.INACTIVE,
+            output_value = Value.ACTIVE if entity.is_on else Value.INACTIVE,
         )
         self._edge_events = True
+        # self.update_lines()
 
     def update(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE
@@ -200,4 +205,5 @@ class Hub:
         _LOGGER.debug(f"in add_cover {relay_port} {state_port}")
         self.add_switch(entity, relay_port, relay_active_low, relay_bias, relay_drive)
         self.add_sensor(entity, state_port, state_active_low, state_bias, 50)
+        self.update_lines()
 

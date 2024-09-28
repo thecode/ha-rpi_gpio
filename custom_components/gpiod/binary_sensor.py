@@ -34,8 +34,7 @@ PLATFORM_SCHEMA = vol.All(
                 vol.Optional(CONF_DEBOUNCE, default=DEFAULT_DEBOUNCE): cv.positive_int
             }]
         )
-    }
-                           )
+    })
 )
 
 
@@ -79,7 +78,11 @@ class GPIODBinarySensor(BinarySensorEntity):
         self._active_low = active_low
         self._bias = bias
         self._debounce = debounce
-        hub.add_sensor(self, port, active_low, bias, debounce)
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._hub.add_sensor(self, self._port, self._active_low, self._bias, self._debounce)
+        self.async_write_ha_state()
 
     def update(self):
         self.is_on = self._hub.update(self._port)

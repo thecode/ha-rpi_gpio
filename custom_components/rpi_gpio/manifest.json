@@ -7,6 +7,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/thecode/ha-rpi_gpio/issues",
   "requirements": [ "gpiod>=2.0.2" ],
-  "version": "2024.9.0",
-  "loggers": [ "rpi_gpio" ]
+  "version": "2024.9.0"
 }

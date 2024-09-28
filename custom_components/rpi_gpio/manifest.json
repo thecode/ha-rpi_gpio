@@ -1,11 +1,12 @@
 {
-  "domain": "gpiod",
-  "name": "GPIOD",
-  "codeowners": [ "@jdeneef" ],
-  "documentation": "https://github.com/jdeneef/ha_gpiod",
+  "domain": "rpi_gpio",
+  "name": "Raspberry Pi GPIO",
+  "codeowners": [ "@thecode", "@jdeneef", "@tomer-w" ],
+  "documentation": "https://github.com/thecode/ha-rpi_gpio",
   "integration_type": "hub",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/jdeneef/ha_gpiod/issues",
+  "issue_tracker": "https://github.com/thecode/ha-rpi_gpio/issues",
   "requirements": [ "gpiod>=2.0.2" ],
-  "version": "1.0.0"
+  "version": "2024.9.0",
+  "loggers": [ "rpi_gpio" ]
 }

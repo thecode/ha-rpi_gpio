@@ -110,7 +110,7 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
             self.is_on = False
         else: 
             self.is_on = True if state.state == STATE_ON else False
-        self._hub.add_switch(self)
+        self._hub.add_switch(self, self._port, self._active_low, self._bias, self._drive_mode)
         self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs: Any) -> None:

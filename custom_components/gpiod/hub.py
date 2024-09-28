@@ -147,20 +147,20 @@ class Hub:
             _LOGGER.debug(f"Event: {event}")
             self._entities[event.line_offset].update()
 
-    def add_switch(self, entity) -> None:
-        _LOGGER.debug(f"in add_switch {entity._port}")
+    def add_switch(self, entity, port, active_low, bias, drive_mode) -> None:
+        _LOGGER.debug(f"in add_switch {port}")
         # read current status of the lines
         # line = self._chip.request_lines({ port: {} })
         # value = True if line.get_value(port) == Value.ACTIVE else False
         # line.release()
         # _LOGGER.debug(f"current value for port {port}: {value}, output_value: {value ^ active_low}")
 
-        self._entities[entity._port] = entity
-        self._config[entity._port] = gpiod.LineSettings(
+        self._entities[port] = entity
+        self._config[port] = gpiod.LineSettings(
             direction = Direction.OUTPUT,
-            bias = BIAS[entity._bias],
-            drive = DRIVE[entity._drive_mode],
-            active_low = entity._active_low,
+            bias = BIAS[bias],
+            drive = DRIVE[drive_mode],
+            active_low = active_low,
             output_value = Value.ACTIVE if entity.is_on else Value.INACTIVE
             # output_value = Value.ACTIVE if value ^ active_low else Value.INACTIVE,
             # output_value = Value.INACTIVE
@@ -177,11 +177,12 @@ class Hub:
 
     def add_sensor(self, entity, port, active_low, bias, debounce) -> None:
         _LOGGER.debug(f"in add_sensor {port}")
-        # read current status of the lines
-        # line = self._chip.request_lines({ port: {} })
-        # value = True if line.get_value(port) == Value.ACTIVE else False
-        # line.release()
-        # _LOGGER.debug(f"current value for port {port}: {value}, output_value: {value ^ active_low}")
+        # read current status of the sensor
+        line = self._chip.request_lines({ port: {} })
+        value = True if line.get_value(port) == Value.ACTIVE else False
+        entity.is_on = True if value ^ active_low else False
+        line.release()
+        _LOGGER.debug(f"current value for port {port}: {entity.is_on}")
 
         self._entities[port] = entity
         self._config[port] = gpiod.LineSettings(
@@ -191,10 +192,10 @@ class Hub:
             active_low = active_low,
             debounce_period = timedelta(milliseconds=debounce),
             event_clock = Clock.REALTIME,
-            # output_value = Value.ACTIVE if value ^ active_low else Value.INACTIVE,
+            output_value = Value.ACTIVE if entity.is_on else Value.INACTIVE,
         )
         self._edge_events = True
-        self.update_lines()
+        # self.update_lines()
 
     def update(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE

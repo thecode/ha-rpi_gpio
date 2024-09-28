@@ -120,6 +120,8 @@ cover:
     covers:
       - relay_pin: 10
         state_pin: 11
+        name: "Left door"
+        unique_id: "left_door_cover_port_11"
       - relay_pin: 12
         state_pin: 13
         name: "Right door"
@@ -139,21 +141,6 @@ cover:
 | `state_pin`       | yes      |         | integer | The pin of your Raspberry Pi to retrieve the state                                                         |
 | `name`            | no       |         | string  | The name for the cover entity                                                                              |
 | `unique_id`       | no       |         | string  | An ID that uniquely identifies the cover. Set this to a unique value to allow customization through the UI |
-`name` | yes | | string | The name for the cover entity
-`relay_port`|yes| |integer|Relay switch gpio switching cover motor
-`relay_pin`|*backwards compatibility*| |integer|see `relay_port`, might be removed in the future
-`relay_time`|no|`200` |integer|Time in milliseconds relay switch will be switched to open/close cover
-`relay_active_low`|no | `false`| boolean| invert input for `relay_port`
-`invert_relay`|*backwards compatibility*| | boolean|see `relay_active_low`, might be removed in the future
-`relay_bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
-`relay_drive`|no|`PUSH_PULL`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PUSH_PULL`
-`state_port`|yes| | integer|State port for opened/closed status of cover
-`state_pin`|*backwards compatibility*| | integer|see `state_port`, might be removed in the future
-`state_bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
-`state_pull_mode`|*backwards compatibility*| |string|see `state_bias`, might be removed in the future
-`state_active_low`|no | `false`| boolean| invert output for state pin
-`invert_state`|*backwards compatibility*| |boolean|see `state_active_low`, might be removed in the future
-`unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
 
 ### Remote Raspberry Pi Cover
 

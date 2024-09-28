@@ -1,0 +1,43 @@
+# Berryclip gpio numbering
+# LED 1  - Pin 7  - GPIO4
+# LED 2  - Pin 11 - GPIO17
+# LED 3  - Pin 15 - GPIO22
+# LED 4  - Pin 19 - GPIO10
+# LED 5  - Pin 21 - GPIO9
+# LED 6  - Pin 23 - GPIO11
+# Buzzer - Pin 24 - GPIO8
+# Switch - Pin 26 - GPIO7
+
+switch:
+  - platform: gpiod
+    switches:
+      - port: 4
+        name: "Led 1 Red"
+      - port: 17
+        name: "Led 2 Red"
+      - port: 22
+        name: "Led 3 Yellow"
+      - port: 10
+        name: "Led 4 Yellow"
+      - port: 9
+        name: "Led 5 Green"
+      - port: 11
+        name: "Led 6 Green"
+      - port: 8
+        name: "Buzzer"
+
+binary_sensor:
+  - platform: gpiod
+    binary_sensors:
+      - port: 7
+        name: "Button"
+
+# sample for cover
+# cover:
+#   - platform: gpiod
+#     covers:
+#       - relay_pin: 7
+#         name: Cover blue
+#         state_pin: 4
+#         relay_time: 1200
+          

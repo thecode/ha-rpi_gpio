@@ -1,137 +1,151 @@
-"""Support for controlling a Raspberry Pi cover."""
 from __future__ import annotations
+from functools import cached_property
+
+from . import DOMAIN
 
 from time import sleep
 
+import logging
+_LOGGER = logging.getLogger(__name__)
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.components.cover import CoverEntity
+from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_UNIQUE_ID
+from .hub import BIAS, DRIVE
+
+CONF_RELAY_PORT = "relay_port"
+CONF_RELAY_TIME = "relay_time"
+DEFAULT_RELAY_TIME = 2000
+CONF_RELAY_ACTIVE_LOW = "relay_active_low"
+DEFAULT_RELAY_ACTIVE_LOW = False
+CONF_RELAY_BIAS = "relay_bias"
+DEFAULT_RELAY_BIAS = "AS_IS"
+CONF_RELAY_DRIVE = "relay_drive"
+DEFAULT_RELAY_DRIVE = "PUSH_PULL"
+CONF_STATE_PORT = "state_port"
+CONF_STATE_BIAS = "state_pull_mode"
+DEFAULT_STATE_BIAS = "PULL_UP"
+CONF_STATE_ACTIVE_LOW = "state_active_low"
+DEFAULT_STATE_ACTIVE_LOW = False
+
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 
-from homeassistant.components.cover import PLATFORM_SCHEMA, CoverEntity
-from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_UNIQUE_ID
-from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.reload import setup_reload_service
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-
-from . import DOMAIN, PLATFORMS, read_input, setup_input, setup_output, write_output
-
-CONF_RELAY_PIN = "relay_pin"
-CONF_RELAY_TIME = "relay_time"
-CONF_STATE_PIN = "state_pin"
-CONF_STATE_PULL_MODE = "state_pull_mode"
-CONF_INVERT_STATE = "invert_state"
-CONF_INVERT_RELAY = "invert_relay"
-
-DEFAULT_RELAY_TIME = 0.2
-DEFAULT_STATE_PULL_MODE = "UP"
-DEFAULT_INVERT_STATE = False
-DEFAULT_INVERT_RELAY = False
-_COVERS_SCHEMA = vol.All(
-    cv.ensure_list,
-    [
-        vol.Schema(
-            {
-                CONF_NAME: cv.string,
-                CONF_RELAY_PIN: cv.positive_int,
-                CONF_STATE_PIN: cv.positive_int,
-                vol.Optional(CONF_UNIQUE_ID): cv.string,
-            }
-        )
-    ],
-)
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Required(CONF_COVERS): _COVERS_SCHEMA,
-        vol.Optional(CONF_STATE_PULL_MODE, default=DEFAULT_STATE_PULL_MODE): cv.string,
-        vol.Optional(CONF_RELAY_TIME, default=DEFAULT_RELAY_TIME): cv.positive_int,
-        vol.Optional(CONF_INVERT_STATE, default=DEFAULT_INVERT_STATE): cv.boolean,
-        vol.Optional(CONF_INVERT_RELAY, default=DEFAULT_INVERT_RELAY): cv.boolean,
-    }
+PLATFORM_SCHEMA = vol.All(
+    PLATFORM_SCHEMA.extend(
+        {
+            vol.Exclusive(CONF_COVERS, CONF_COVERS): vol.All(
+                cv.ensure_list, [{
+                    vol.Required(CONF_NAME): cv.string,
+                    vol.Required(vol.Any(CONF_RELAY_PORT, "relay_pin")): cv.positive_int,
+                    vol.Optional(CONF_RELAY_TIME, default=DEFAULT_RELAY_TIME): cv.positive_int,
+                    vol.Optional(vol.Any(CONF_RELAY_ACTIVE_LOW, "invert_relay")): cv.boolean,
+                    vol.Optional(CONF_RELAY_BIAS, default=DEFAULT_RELAY_BIAS): vol.In(BIAS.keys()),
+                    vol.Optional(CONF_RELAY_DRIVE, default=DEFAULT_RELAY_DRIVE): vol.In(DRIVE.keys()),
+                    vol.Required(vol.Any(CONF_STATE_PORT,"state_pin")): cv.positive_int,
+                    vol.Optional(vol.Any(CONF_STATE_BIAS, "state_pull_mode")): vol.In(BIAS.keys()),
+                    vol.Optional(vol.Any(CONF_STATE_ACTIVE_LOW, "invert_state")): cv.boolean,
+                    vol.Optional(CONF_UNIQUE_ID): cv.string,
+                }]
+            )
+        }
+    )
 )
 
 
-def setup_platform(
+async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up the RPi cover platform."""
-    setup_reload_service(hass, DOMAIN, PLATFORMS)
+    async_add_entities: AddEntitiesCallback,
+    discovery_info: DiscoveryInfoType | None = None) -> None:
+    
+    _LOGGER.debug(f"setup_platform: {config}")
+    hub = hass.data[DOMAIN]
+    if not hub._online:
+        _LOGGER.error("hub not online, bailing out")
 
-    relay_time = config[CONF_RELAY_TIME]
-    state_pull_mode = config[CONF_STATE_PULL_MODE]
-    invert_state = config[CONF_INVERT_STATE]
-    invert_relay = config[CONF_INVERT_RELAY]
     covers = []
-    covers_conf = config[CONF_COVERS]
-
-    for cover in covers_conf:
+    for cover in config.get(CONF_COVERS):
         covers.append(
-            RPiGPIOCover(
+            GPIODCover(
+                hub,
                 cover[CONF_NAME],
-                cover[CONF_RELAY_PIN],
-                cover[CONF_STATE_PIN],
-                state_pull_mode,
-                relay_time,
-                invert_state,
-                invert_relay,
-                cover.get(CONF_UNIQUE_ID),
+                cover.get(CONF_RELAY_PORT) or cover.get("relay_pin"),
+                cover[CONF_RELAY_TIME],
+                cover.get(CONF_RELAY_ACTIVE_LOW) or cover.get("invert_relay") or DEFAULT_RELAY_ACTIVE_LOW,
+                cover.get(CONF_RELAY_BIAS),
+                cover.get(CONF_RELAY_DRIVE),
+                cover.get(CONF_STATE_PORT) or cover.get("state_pin"),
+                cover.get(CONF_STATE_BIAS) or cover.get("state_bias") or DEFAULT_STATE_BIAS,
+                cover.get(CONF_STATE_ACTIVE_LOW) or cover.get("invert_state") or DEFAULT_STATE_ACTIVE_LOW,
+                cover.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{cover.get(CONF_RELAY_PORT) or cover.get("relay_pin")}_{cover[CONF_NAME].lower().replace(' ', '_')}",
             )
         )
-    add_entities(covers)
 
+    async_add_entities(covers)
 
-class RPiGPIOCover(CoverEntity):
-    """Representation of a Raspberry GPIO cover."""
+class GPIODCover(CoverEntity):
+    should_poll = False
 
-    def __init__(
-        self,
-        name,
-        relay_pin,
-        state_pin,
-        state_pull_mode,
-        relay_time,
-        invert_state,
-        invert_relay,
-        unique_id,
-    ):
-        """Initialize the cover."""
-        self._attr_name = name
-        self._attr_unique_id = unique_id
-        self._state = False
-        self._relay_pin = relay_pin
-        self._state_pin = state_pin
-        self._state_pull_mode = state_pull_mode
+    def __init__(self, hub, name, relay_port, relay_time, relay_active_low, relay_bias, relay_drive,
+                 state_port, state_bias, state_active_low, unique_id):
+        _LOGGER.debug(f"GPIODCover init: {relay_port}:{state_port} - {name} - {unique_id} - {relay_time}")
+        self._hub = hub
+        self.name = name
+        self._relay_port = relay_port
         self._relay_time = relay_time
-        self._invert_state = invert_state
-        self._invert_relay = invert_relay
-        setup_output(self._relay_pin)
-        setup_input(self._state_pin, self._state_pull_mode)
-        write_output(self._relay_pin, 0 if self._invert_relay else 1)
+        self._relay_active_low = relay_active_low
+        self._relay_bias = relay_bias
+        self._relay_drive = relay_drive
+        self._state_port = state_port
+        self._state_bias = state_bias
+        self._start_active_low = state_active_low
+        self.unique_id = unique_id
+        self._attr_is_closed = False != state_active_low
+        hub.add_cover(self, relay_port, relay_active_low, relay_bias, relay_drive,
+                      state_port, state_bias, state_active_low)
 
     def update(self):
-        """Update the state of the cover."""
-        self._state = read_input(self._state_pin)
-
-    @property
-    def is_closed(self):
-        """Return true if cover is closed."""
-        return self._state != self._invert_state
-
-    def _trigger(self):
-        """Trigger the cover."""
-        write_output(self._relay_pin, 1 if self._invert_relay else 0)
-        sleep(self._relay_time)
-        write_output(self._relay_pin, 0 if self._invert_relay else 1)
+        self.is_closed = self._hub.update(self._state_port)
+        self.schedule_update_ha_state(False)
 
     def close_cover(self, **kwargs):
-        """Close the cover."""
-        if not self.is_closed:
-            self._trigger()
+        if self.is_closed:
+            return
+        self._hub.turn_on(self._relay_port)
+        self.is_closing = True
+        # self.is_closed = None
+        self.schedule_update_ha_state(False)
+        sleep(self._relay_time/1000)
+        if not self.is_closing:
+            # closing stopped
+            return
+        self._hub.turn_off(self._relay_port)
+        self.is_closing = False
+        self.update()
 
     def open_cover(self, **kwargs):
-        """Open the cover."""
-        if self.is_closed:
-            self._trigger()
+        if not self.is_closed:
+            return
+        self._hub.turn_on(self._relay_port)
+        self.is_opening = True
+        # self.is_closed = None
+        self.schedule_update_ha_state(False)
+        sleep(self._relay_time/1000)
+        if not self.is_opening:
+            # opening stopped
+            return
+        self._hub.turn_off(self._relay_port)
+        self.is_opening = False
+        self.update()
+
+    def stop_cover(self, **kwargs):
+        if not (self.is_closing or self.is_opening):
+            return
+        self._hub.turn_off(self._relay_port)
+        self.is_opening = False
+        self.is_closing = False
+        self.schedule_update_ha_state(False)

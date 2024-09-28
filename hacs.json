@@ -1,4 +1,5 @@
 {
   "name": "Raspberry Pi GPIO",
-  "homeassistant": "2022.7.0"
+  "homeassistant": "2022.7.0",
+  "render_readme": true
 }

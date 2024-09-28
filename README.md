@@ -16,13 +16,31 @@ Copy the `rpi_gpio` folder and all of its contents into your Home Assistant's `c
 
 # Usage
 
+The `gpiod` platform will be initialized using the path to the gpio chip. When path is not in the config `/dev/gpiochip[0-5]` are tested for a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`. So with a raspberry pi you should be OK to leave the path empty.
+
+Raspberry Pi | GPIO Device
+---          | ---
+RPi3, RPi4   | `/dev/gpiochip0`
+RPi5         | `/dev/gpiochip4`
+
+```yaml
+# setup gpiod chip; mostly not required
+gpiod:
+  path: '/dev/gpiochip0'
+```
+
+### Options
+
+Key | Required | Default | Type | Description
+--- | --- | --- | --- | ---
+`gpiod` | only for path|- |- | `gpiod` platform config and initialization, only required when you need to specify a specific gpiodevice path (see path)
+`path` | no | discovered | string | path to gpio device, if not set auto discovered
+
 ## Binary Sensor
 
 The `rpi_gpio` binary sensor platform allows you to read sensor values of the GPIOs of your [Raspberry Pi](https://www.raspberrypi.org/).
 
 ### Configuration
-
-[Legacy binary sensor configuration](https://github.com/thecode/ha-rpi_gpio/blob/main/legacy-config.md#binary-sensor)
 
 To use your Raspberry Pi's GPIO in your installation, add the following to your `configuration.yaml` file:
 
@@ -59,10 +77,16 @@ binary_sensor:
 | -------------- | -------- | --------------------- | --------|------------------------------------------------------------------------------------------------------------ |
 | `sensors`      | yes      |                       | list    | List of sensor IO ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
 | `name`         | yes      |                       | string  | The name for the binary sensor entity                                                                       |
+| `port`         | yes      |                       | integer | the GPIO port to be used
 | `unique_id`    | no       |                       | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI |
 | `bouncetime`   | no       | `50`                  | integer | The time in milliseconds for port debouncing                                                                |
 | `invert_logic` | no       | `false` (ACTIVE HIGH) | boolean | If `true`, inverts the output logic to ACTIVE LOW                                                           |
 | `pull_mode`    | no       | `UP`                  | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor                 |
+`debounce` | no | `50` | integer | The time in milliseconds for port debouncing
+`active_low` | no | `false` | boolean | If `true`, input of `gpio` is inverted, `active_low` results in `on`
+`invert_logic` | *backwards compatibility* | | boolean | see `active_low`, might be removed in the future
+`bias` | no | `PULL_UP` | string  | control bias setting of GPIO, used to define the electrical state of a GPIO line when not actively driven; `PULL_UP` set weak pull-up resistor on the line, ensuring that the line is pulled to a high level (3.3V or 5V) when not actively driven; `PULL_DOWN` sets weak pull-down resistor to pull to low level (0V), `DISABLED` remains floating, `AS_IS` not changed
+`pull_mode` | *backwards compatibility* | | string  | see `bias`, might be removed in the future
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 
@@ -120,6 +144,21 @@ cover:
 | `state_pin`       | yes      |         | integer | The pin of your Raspberry Pi to retrieve the state                                                         |
 | `name`            | no       |         | string  | The name for the cover entity                                                                              |
 | `unique_id`       | no       |         | string  | An ID that uniquely identifies the cover. Set this to a unique value to allow customization through the UI |
+`name` | yes | | string | The name for the cover entity
+`relay_port`|yes| |integer|Relay switch gpio switching cover motor
+`relay_pin`|*backwards compatibility*| |integer|see `relay_port`, might be removed in the future
+`relay_time`|no|`200` |integer|Time in milliseconds relay switch will be switched to open/close cover
+`relay_active_low`|no | `false`| boolean| invert input for `relay_port`
+`invert_relay`|*backwards compatibility*| | boolean|see `relay_active_low`, might be removed in the future
+`relay_bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
+`relay_drive`|no|`PUSH_PULL`|string|set `relay_pin` `drive_mode`, options: `OPEN_DRAIN`, `OPEN_SOURCE`, `PUSH_PULL`
+`state_port`|yes| | integer|State port for opened/closed status of cover
+`state_pin`|*backwards compatibility*| | integer|see `state_port`, might be removed in the future
+`state_bias` | no | `PULL_UP` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor
+`state_pull_mode`|*backwards compatibility*| |string|see `state_bias`, might be removed in the future
+`state_active_low`|no | `false`| boolean| invert output for state pin
+`invert_state`|*backwards compatibility*| |boolean|see `state_active_low`, might be removed in the future
+`unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
 
 ### Remote Raspberry Pi Cover
 
@@ -130,8 +169,6 @@ If you don't have Home Assistant running on your Raspberry Pi and you want to us
 The `rpi_gpio` switch platform allows you to control the GPIOs of your [Raspberry Pi](https://www.raspberrypi.org/).
 
 ### Configuration
-
-[Legacy switch configuration](https://github.com/thecode/ha-rpi_gpio/blob/main/legacy-config.md#switch)
 
 To use your Raspberry Pi's GPIO in your installation, add the following to your `configuration.yaml` file:
 
@@ -170,6 +207,16 @@ switch:
 | `unique_id`    | no       |         | string  | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI |
 | `invert_logic` | no       | `false` | boolean | If true, inverts the output logic to ACTIVE LOW                                                             |
 | `persistent`   | no       | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash               |
+`switches` | yes | | list | List of switch IO ports ([Raspberry Pi BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))
+`name` | yes | | string | The name for the switch entity
+`port` | yes | | integer | the GPIO port to be used
+`unique_id` | no | generated | string | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config
+`active_low` | no | `false` | boolean | If `true`, output of `gpio` is inverted, `active_low` switches `on`
+`invert_logic` | *backwards compatibility* | | boolean | see `active_low`, might be removed in the future
+`bias` | no | `AS_IS` | string  | Type of internal pull resistor to use: `PULL_UP` - pull-up resistor, `PULL_DOWN` - pull-down resistor, `AS-IS` no change
+`pull_mode`|*backwards compatibility*| |string|see `bias`, might be removed in the future
+`drive`|no| `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
+`persistent` | no | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash.
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 
@@ -183,4 +230,12 @@ switch:
     switches:
       - port: 17
         name: "Speaker Relay"
-```
+
+
+# Add Debug info and issue reporting
+*Before* reporting issues please add this to your `configuration.yaml` `logger` section, check logs and report issue adding logging.
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.rpi_gpio: debug

@@ -56,19 +56,19 @@ async def async_setup_platform(
 
     switches = []
     for switch in config.get(CONF_SWITCHES):
-        if switch[CONF_PERSISTENT]:
-            switches.append(
-                PersistentRPiGPIOSwitch(
-                    hub,
-                    switch[CONF_NAME],
-                    switch[CONF_PORT],
-                    switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
-                    switch.get(CONF_ACTIVE_LOW) or switch.get("invert_logic") or DEFAULT_ACTIVE_LOW,
-                    switch.get(CONF_BIAS),
-                    switch.get(CONF_DRIVE)
-                )
-            )
-        else:
+        # if switch[CONF_PERSISTENT]:
+            # switches.append(
+                # PersistentRPiGPIOSwitch(
+                    # hub,
+                    # switch[CONF_NAME],
+                    # switch[CONF_PORT],
+                    # switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
+                    # switch.get(CONF_ACTIVE_LOW) or switch.get("invert_logic") or DEFAULT_ACTIVE_LOW,
+                    # switch.get(CONF_BIAS),
+                    # switch.get(CONF_DRIVE)
+                # )
+            # )
+        # else:
             switches.append(
                 GPIODSwitch(
                     hub,
@@ -77,17 +77,18 @@ async def async_setup_platform(
                     switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
                     switch.get(CONF_ACTIVE_LOW) or switch.get("invert_logic") or DEFAULT_ACTIVE_LOW,
                     switch.get(CONF_BIAS),
-                    switch.get(CONF_DRIVE)
+                    switch.get(CONF_DRIVE),
+                    switch[CONF_PERSISTENT]
                 )
             )
 
     async_add_entities(switches)
 
 
-class GPIODSwitch(SwitchEntity):
+class GPIODSwitch(SwitchEntity, RestoreEntity):
     should_poll = False
 
-    def __init__(self, hub, name, port, unique_id, active_low, bias, drive):
+    def __init__(self, hub, name, port, unique_id, active_low, bias, drive, persistent):
         _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id} - active_low: {active_low} - bias: {bias} - drive: {drive}")
         self._hub = hub
         # self._attr_name = name
@@ -98,7 +99,19 @@ class GPIODSwitch(SwitchEntity):
         self._active_low = active_low
         self._bias = bias
         self._drive_mode = drive
-        hub.add_switch(self, port, active_low, bias, drive)
+        self._persistent = persistent
+
+    async def async_added_to_hass(self) -> None:
+        """Call when the switch is added to hass."""
+        await super().async_added_to_hass()
+        state = await self.async_get_last_state()
+        _LOGGER.debug(f"GPIODSwitch async_added_to_has initial port: {self._port} persistent: {self._persistent} state: {state.state}")
+        if not state or not self._persistent:
+            self.is_on = False
+        else: 
+            self.is_on = True if state.state == STATE_ON else False
+        self._hub.add_switch(self)
+        self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         self._hub.turn_on(self._port)
@@ -115,16 +128,16 @@ class GPIODSwitch(SwitchEntity):
         self.schedule_update_ha_state(False)
 
 
-class PersistentRPiGPIOSwitch(GPIODSwitch, RestoreEntity):
-    async def async_added_to_hass(self) -> None:
-        """Call when the switch is added to hass."""
-        await super().async_added_to_hass()
-        state = await self.async_get_last_state()
-        _LOGGER.debug(f"recovering state: {state}")
-        if not state:
-            return
-        self.is_on = True if state.state == STATE_ON else False
-        if self.is_on:
-            await self.async_turn_on()
-        else:
-            await self.async_turn_off()
+# class PersistentRPiGPIOSwitch(GPIODSwitch, RestoreEntity):
+    # async def async_added_to_hass(self) -> None:
+        # """Call when the switch is added to hass."""
+        # await super().async_added_to_hass()
+        # state = await self.async_get_last_state()
+        # _LOGGER.debug(f"recovering state: {state}")
+        # if not state:
+            # return
+        # self.is_on = True if state.state == STATE_ON else False
+        # if self.is_on:
+            # await self.async_turn_on()
+        # else:
+            # await self.async_turn_off()

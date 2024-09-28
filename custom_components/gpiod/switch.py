@@ -105,10 +105,10 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
         """Call when the switch is added to hass."""
         await super().async_added_to_hass()
         state = await self.async_get_last_state()
-        _LOGGER.debug(f"GPIODSwitch async_added_to_has initial port: {self._port} persistent: {self._persistent} state: {state.state}")
         if not state or not self._persistent:
             self.is_on = False
         else: 
+            _LOGGER.debug(f"GPIODSwitch async_added_to_has initial port: {self._port} persistent: {self._persistent} state: {state.state}")
             self.is_on = True if state.state == STATE_ON else False
         self._hub.add_switch(self, self._port, self._active_low, self._bias, self._drive_mode)
         self.async_write_ha_state()

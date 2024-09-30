@@ -78,7 +78,6 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
     def __init__(self, hub, name, port, unique_id, active_low, bias, drive, persistent):
         _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id} - active_low: {active_low} - bias: {bias} - drive: {drive}")
         self._hub = hub
-        # self._attr_name = name
         self.name = name
         self.unique_id = unique_id
         self._port = port
@@ -113,4 +112,3 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
     def update(self):
         self.is_on = self._hub.update(self._port)
         self.schedule_update_ha_state(False)
-        

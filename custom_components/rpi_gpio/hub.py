@@ -87,7 +87,6 @@ class Hub:
         _LOGGER.debug(f"verify_gpiochip gpiodevice: {path} has pinctrl")
         return True
 
-
     async def startup(self, _):
         """Stuff to do after starting."""
         _LOGGER.debug(f"startup {DOMAIN} hub")
@@ -97,16 +96,11 @@ class Hub:
         # setup lines
         self.update_lines()
 
-        # read initial states for sensors
-        # for port in self._config:
-            # self._entities[port].update()
-
         if not self._edge_events:
             return
 
         _LOGGER.debug("Start listener")
         self._hass.loop.add_reader(self._lines.fd, self.handle_events)
-
 
     def cleanup(self, _):
         """Stuff to do before stopping."""
@@ -146,11 +140,6 @@ class Hub:
 
     def add_switch(self, entity, port, active_low, bias, drive_mode) -> None:
         _LOGGER.debug(f"in add_switch {port}")
-        # read current status of the lines
-        # line = self._chip.request_lines({ port: {} })
-        # value = True if line.get_value(port) == Value.ACTIVE else False
-        # line.release()
-        # _LOGGER.debug(f"current value for port {port}: {value}, output_value: {value ^ active_low}")
 
         self._entities[port] = entity
         self._config[port] = gpiod.LineSettings(
@@ -159,10 +148,7 @@ class Hub:
             drive = DRIVE[drive_mode],
             active_low = active_low,
             output_value = Value.ACTIVE if entity.is_on else Value.INACTIVE
-            # output_value = Value.ACTIVE if value ^ active_low else Value.INACTIVE,
-            # output_value = Value.INACTIVE
         )
-        # self.update_lines()
 
     def turn_on(self, port) -> None:
         _LOGGER.debug(f"in turn_on")
@@ -192,7 +178,6 @@ class Hub:
             output_value = Value.ACTIVE if entity.is_on else Value.INACTIVE,
         )
         self._edge_events = True
-        # self.update_lines()
 
     def update(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE

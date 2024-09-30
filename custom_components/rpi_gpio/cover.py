@@ -58,7 +58,7 @@ async def async_setup_platform(
     config: ConfigType,
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None) -> None:
-    
+
     _LOGGER.debug(f"setup_platform: {config}")
     hub = hass.data[DOMAIN]
     if not hub._online:
@@ -150,3 +150,4 @@ class GPIODCover(CoverEntity):
         self.is_opening = False
         self.is_closing = False
         self.schedule_update_ha_state(False)
+

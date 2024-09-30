@@ -208,12 +208,7 @@ switch:
     switches:
       - port: 17
         name: "Speaker Relay"
+```
 
-
-# Add Debug info and issue reporting
-*Before* reporting issues please add this to your `configuration.yaml` `logger` section, check logs and report issue adding logging.
-```yaml
-logger:
-  default: info
-  logs:
-    custom_components.rpi_gpio: debug
+# Reporting issues
+*Before* reporting issues please enable debug logging as described [here](https://www.home-assistant.io/docs/configuration/troubleshooting/#enabling-debug-logging), check logs and report issue attaching the log file.

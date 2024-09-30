@@ -1,4 +1,4 @@
 
-DOMAIN = "rpi_gpiod"
+DOMAIN = "rpi_gpio"
 
 

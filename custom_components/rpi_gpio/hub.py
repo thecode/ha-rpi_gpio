@@ -7,6 +7,7 @@ _LOGGER = logging.getLogger(__name__)
 
 from homeassistant.core import HomeAssistant
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, EVENT_HOMEASSISTANT_START
+from homeassistant.exceptions import IntegrationError
 
 from typing import Dict
 from datetime import timedelta
@@ -64,7 +65,7 @@ class Hub:
 
         if not self._online:
             _LOGGER.error("No gpio device detected, bailing out")
-            return
+            raise IntegrationError("No gpio device detected")
 
         _LOGGER.debug(f"using gpio_device: {self._path}")
 

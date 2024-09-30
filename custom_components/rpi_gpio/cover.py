@@ -118,7 +118,6 @@ class GPIODCover(CoverEntity):
             return
         self._hub.turn_on(self._relay_port)
         self.is_closing = True
-        # self.is_closed = None
         self.schedule_update_ha_state(False)
         sleep(self._relay_time)
         if not self.is_closing:

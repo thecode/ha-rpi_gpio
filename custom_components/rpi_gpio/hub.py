@@ -127,7 +127,7 @@ class Hub:
         _LOGGER.debug(f"updating lines: {self._config}")
         self._lines = gpiod.request_lines(
             self._path,
-            consumer = self.manufacturer,
+            consumer = "rpi_gpio",
             config = self._config
         )
 

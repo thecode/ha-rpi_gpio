@@ -30,12 +30,9 @@ DRIVE = {
 
 class Hub:
 
-    manufacturer = "rpi_gpio"
 
     def __init__(self, hass: HomeAssistant, path: str) -> None:
         """GPIOD Hub"""
-
-        _LOGGER.debug(f"in hub.__init__ path: {path}")
 
         self._path = path
         self._chip :  gpiod.Chip

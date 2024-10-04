@@ -30,7 +30,6 @@ DRIVE = {
 
 class Hub:
 
-    manufacturer = "ha_gpiod"
 
     def __init__(self, hass: HomeAssistant, path: str) -> None:
         """GPIOD Hub"""

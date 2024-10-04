@@ -30,7 +30,7 @@ DRIVE = {
 
 class Hub:
 
-    manufacturer = "ha_gpiod"
+    manufacturer = "rpi_gpio"
 
     def __init__(self, hass: HomeAssistant, path: str) -> None:
         """GPIOD Hub"""
@@ -152,11 +152,11 @@ class Hub:
         )
 
     def turn_on(self, port) -> None:
-        _LOGGER.debug(f"in turn_on")
+        _LOGGER.debug(f"in turn_on {port}")
         self._lines.set_value(port, Value.ACTIVE)
 
     def turn_off(self, port) -> None:
-        _LOGGER.debug(f"in turn_off")
+        _LOGGER.debug(f"in turn_off {port}")
         self._lines.set_value(port, Value.INACTIVE)
 
     def add_sensor(self, entity, port, active_low, bias, debounce) -> None:

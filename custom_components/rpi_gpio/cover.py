@@ -89,13 +89,14 @@ async def async_setup_platform(
     async_add_entities(covers)
 
 class GPIODCover(CoverEntity):
-    should_poll = False
+    _attr_should_poll = False
 
     def __init__(self, hub, name, relay_port, relay_time, relay_active_low, relay_bias, relay_drive,
                  state_port, state_bias, state_active_low, unique_id):
         _LOGGER.debug(f"GPIODCover init: {relay_port}:{state_port} - {name} - {unique_id} - {relay_time}")
         self._hub = hub
-        self.name = name
+        self._attr_name = name
+        self._attr_unique_id = unique_id
         self._relay_port = relay_port
         self._relay_time = relay_time
         self._relay_active_low = relay_active_low
@@ -104,49 +105,47 @@ class GPIODCover(CoverEntity):
         self._state_port = state_port
         self._state_bias = state_bias
         self._start_active_low = state_active_low
-        self.unique_id = unique_id
         self._attr_is_closed = False != state_active_low
         hub.add_cover(self, relay_port, relay_active_low, relay_bias, relay_drive,
                       state_port, state_bias, state_active_low)
 
     def update(self):
-        self.is_closed = self._hub.update(self._state_port)
+        self._attr_is_closed = self._hub.update(self._state_port)
         self.schedule_update_ha_state(False)
 
     def close_cover(self, **kwargs):
-        if self.is_closed:
+        if self._attr_is_closed:
             return
         self._hub.turn_on(self._relay_port)
-        self.is_closing = True
+        self._attr_is_closing = True
         self.schedule_update_ha_state(False)
         sleep(self._relay_time)
-        if not self.is_closing:
+        if not self._attr_is_closing:
             # closing stopped
             return
         self._hub.turn_off(self._relay_port)
-        self.is_closing = False
+        self._attr_is_closing = False
         self.update()
 
     def open_cover(self, **kwargs):
-        if not self.is_closed:
+        if not self._attr_is_closed:
             return
         self._hub.turn_on(self._relay_port)
-        self.is_opening = True
-        # self.is_closed = None
+        self._attr_is_opening = True
         self.schedule_update_ha_state(False)
         sleep(self._relay_time)
-        if not self.is_opening:
+        if not self._attr_is_opening:
             # opening stopped
             return
         self._hub.turn_off(self._relay_port)
-        self.is_opening = False
+        self._attr_is_opening = False
         self.update()
 
     def stop_cover(self, **kwargs):
-        if not (self.is_closing or self.is_opening):
+        if not (self._attr_is_closing or self._attr_is_opening):
             return
         self._hub.turn_off(self._relay_port)
-        self.is_opening = False
-        self.is_closing = False
+        self._attr_is_opening = False
+        self._attr_is_closing = False
         self.schedule_update_ha_state(False)
 

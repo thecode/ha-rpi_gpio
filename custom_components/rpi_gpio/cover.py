@@ -125,7 +125,7 @@ class GPIODCover(CoverEntity):
             return
         self._hub.turn_off(self._relay_port)
         self._attr_is_closing = False
-        self.update()
+        self.handle_event()
 
     def open_cover(self, **kwargs):
         if not self.is_closed:
@@ -139,7 +139,7 @@ class GPIODCover(CoverEntity):
             return
         self._hub.turn_off(self._relay_port)
         self._attr_is_opening = False
-        self.update()
+        self.handle_event()
 
     def stop_cover(self, **kwargs):
         if not (self.is_closing or self.is_opening):

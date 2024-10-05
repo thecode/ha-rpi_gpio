@@ -114,13 +114,13 @@ class GPIODCover(CoverEntity):
         self.schedule_update_ha_state(False)
 
     def close_cover(self, **kwargs):
-        if self._attr_is_closed:
+        if self.is_closed:
             return
         self._hub.turn_on(self._relay_port)
         self._attr_is_closing = True
         self.schedule_update_ha_state(False)
         sleep(self._relay_time)
-        if not self._attr_is_closing:
+        if not self.is_closing:
             # closing stopped
             return
         self._hub.turn_off(self._relay_port)
@@ -128,13 +128,13 @@ class GPIODCover(CoverEntity):
         self.update()
 
     def open_cover(self, **kwargs):
-        if not self._attr_is_closed:
+        if not self.is_closed:
             return
         self._hub.turn_on(self._relay_port)
         self._attr_is_opening = True
         self.schedule_update_ha_state(False)
         sleep(self._relay_time)
-        if not self._attr_is_opening:
+        if not self.is_opening:
             # opening stopped
             return
         self._hub.turn_off(self._relay_port)
@@ -142,7 +142,7 @@ class GPIODCover(CoverEntity):
         self.update()
 
     def stop_cover(self, **kwargs):
-        if not (self._attr_is_closing or self._attr_is_opening):
+        if not (self.is_closing or self.is_opening):
             return
         self._hub.turn_off(self._relay_port)
         self._attr_is_opening = False

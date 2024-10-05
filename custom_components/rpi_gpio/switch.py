@@ -108,6 +108,6 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
         self._attr_is_on = False
         self.async_write_ha_state()
 
-    def update(self):
+    def handle_event(self):
         self._attr_is_on = self._hub.update(self._port)
         self.schedule_update_ha_state(False)

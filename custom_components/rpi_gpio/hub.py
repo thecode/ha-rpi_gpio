@@ -133,7 +133,7 @@ class Hub:
     def handle_events(self):
         for event in self._lines.read_edge_events():
             _LOGGER.debug(f"Event: {event}")
-            self._entities[event.line_offset].update()
+            self._entities[event.line_offset].handle_event()
 
     def add_switch(self, entity, port, active_low, bias, drive_mode) -> None:
         _LOGGER.debug(f"in add_switch {port}")

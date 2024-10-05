@@ -1,59 +1,33 @@
-"""Support for controlling GPIO pins of a Raspberry Pi."""
+"""Support for controlling GPIO pins of a device."""
 
-from RPi import GPIO  # pylint: disable=import-error
+import logging
+_LOGGER = logging.getLogger(__name__)
 
-from homeassistant.const import (
-    EVENT_HOMEASSISTANT_START,
-    EVENT_HOMEASSISTANT_STOP,
-    Platform,
-)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
-DOMAIN = "rpi_gpio"
-PLATFORMS = [
-    Platform.BINARY_SENSOR,
-    Platform.COVER,
-    Platform.SWITCH,
-]
+from .const import DOMAIN
+from .hub import Hub
 
+import voluptuous as vol
+import homeassistant.helpers.config_validation as cv
 
-def setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the Raspberry PI GPIO component."""
+from homeassistant.const import CONF_PATH
 
-    def cleanup_gpio(event):
-        """Stuff to do before stopping."""
-        GPIO.cleanup()
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema({
+            vol.Optional(CONF_PATH): vol.All(cv.string, vol.PathExists())
+        })
+    },
+    extra=vol.ALLOW_EXTRA
+)
 
-    def prepare_gpio(event):
-        """Stuff to do when Home Assistant starts."""
-        hass.bus.listen_once(EVENT_HOMEASSISTANT_STOP, cleanup_gpio)
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the GPIO component."""
+    path = config.get(DOMAIN, {}).get(CONF_PATH) 
+    hub = Hub(hass, path)
+    hass.data[DOMAIN] = hub
 
-    hass.bus.listen_once(EVENT_HOMEASSISTANT_START, prepare_gpio)
-    GPIO.setmode(GPIO.BCM)
     return True
 
-
-def setup_output(port):
-    """Set up a GPIO as output."""
-    GPIO.setup(port, GPIO.OUT)
-
-
-def setup_input(port, pull_mode):
-    """Set up a GPIO as input."""
-    GPIO.setup(port, GPIO.IN, GPIO.PUD_DOWN if pull_mode == "DOWN" else GPIO.PUD_UP)
-
-
-def write_output(port, value):
-    """Write a value to a GPIO."""
-    GPIO.output(port, value)
-
-
-def read_input(port):
-    """Read a value from a GPIO."""
-    return GPIO.input(port)
-
-
-def edge_detect(port, event_callback, bounce):
-    """Add detection for RISING and FALLING events."""
-    GPIO.add_event_detect(port, GPIO.BOTH, callback=event_callback, bouncetime=bounce)

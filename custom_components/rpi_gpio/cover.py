@@ -109,7 +109,7 @@ class GPIODCover(CoverEntity):
         hub.add_cover(self, relay_port, relay_active_low, relay_bias, relay_drive,
                       state_port, state_bias, state_active_low)
 
-    def update(self):
+    def handle_event(self):
         self._attr_is_closed = self._hub.update(self._state_port)
         self.schedule_update_ha_state(False)
 

@@ -1,6 +1,6 @@
 """Allows to configure a switch using RPi GPIO."""
 from __future__ import annotations
-from typing import Any
+from typing import Any, List
 
 import voluptuous as vol
 
@@ -42,7 +42,6 @@ _SWITCH_SCHEMA = vol.Schema(
     }
 )
 
-
 PLATFORM_SCHEMA = vol.All(
     PLATFORM_SCHEMA.extend(
         {
@@ -57,7 +56,6 @@ PLATFORM_SCHEMA = vol.All(
     cv.has_at_least_one_key(CONF_PORTS, CONF_SWITCHES),
 )
 
-
 def setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
@@ -67,50 +65,34 @@ def setup_platform(
     """Set up the Raspberry PI GPIO devices."""
     setup_reload_service(hass, DOMAIN, PLATFORMS)
 
-    switches = []
+    switches: List[SwitchEntity] = []
 
     switches_conf = config.get(CONF_SWITCHES)
-    if switches_conf is not None:
+    if switches_conf:
         for switch in switches_conf:
-            if switch[CONF_PERSISTENT]:
-                switches.append(
-                    PersistentRPiGPIOSwitch(
-                        switch[CONF_NAME],
-                        switch[CONF_PORT],
-                        switch[CONF_INVERT_LOGIC],
-                        switch.get(CONF_UNIQUE_ID),
-                    )
+            switch_class = PersistentRPiGPIOSwitch if switch[CONF_PERSISTENT] else RPiGPIOSwitch
+            switches.append(
+                switch_class(
+                    switch[CONF_NAME],
+                    switch[CONF_PORT],
+                    switch[CONF_INVERT_LOGIC],
+                    switch.get(CONF_UNIQUE_ID),
                 )
-            else:
-                switches.append(
-                    RPiGPIOSwitch(
-                        switch[CONF_NAME],
-                        switch[CONF_PORT],
-                        switch[CONF_INVERT_LOGIC],
-                        switch.get(CONF_UNIQUE_ID),
-                    )
-                )
+            )
+    else:
+        invert_logic = config[CONF_INVERT_LOGIC]
+        persistent = config[CONF_PERSISTENT]
+        ports = config[CONF_PORTS]
+        for port, name in ports.items():
+            switch_class = PersistentRPiGPIOSwitch if persistent else RPiGPIOSwitch
+            switches.append(switch_class(name, port, invert_logic))
 
-        add_entities(switches, True)
-        return
-
-    invert_logic = config[CONF_INVERT_LOGIC]
-    persistent = config[CONF_PERSISTENT]
-
-    ports = config[CONF_PORTS]
-    for port, name in ports.items():
-        if persistent:
-            switches.append(PersistentRPiGPIOSwitch(name, port, invert_logic))
-        else:
-            switches.append(RPiGPIOSwitch(name, port, invert_logic))
-
-    add_entities(switches)
-
+    add_entities(switches, True)
 
 class RPiGPIOSwitch(SwitchEntity):
     """Representation of a Raspberry Pi GPIO."""
 
-    def __init__(self, name, port, invert_logic, unique_id=None, skip_reset=False):
+    def __init__(self, name: str, port: int, invert_logic: bool, unique_id: str | None = None, skip_reset: bool = False) -> None:
         """Initialize the pin."""
         self._attr_name = name or DEVICE_DEFAULT_NAME
         self._attr_unique_id = unique_id
@@ -139,11 +121,10 @@ class RPiGPIOSwitch(SwitchEntity):
         self._state = False
         self.async_write_ha_state()
 
-
 class PersistentRPiGPIOSwitch(RPiGPIOSwitch, RestoreEntity):
     """Representation of a persistent Raspberry Pi GPIO."""
 
-    def __init__(self, name, port, invert_logic, unique_id=None):
+    def __init__(self, name: str, port: int, invert_logic: bool, unique_id: str | None = None) -> None:
         """Initialize the pin."""
         super().__init__(name, port, invert_logic, unique_id, True)
 
@@ -151,10 +132,9 @@ class PersistentRPiGPIOSwitch(RPiGPIOSwitch, RestoreEntity):
         """Call when the switch is added to hass."""
         await super().async_added_to_hass()
         state = await self.async_get_last_state()
-        if not state:
-            return
-        self._state = True if state.state == STATE_ON else False
-        if self._state:
-            await self.async_turn_on()
-        else:
-            await self.async_turn_off()
+        if state:
+            self._state = state.state == STATE_ON
+            if self._state:
+                await self.async_turn_on()
+            else:
+                await self.async_turn_off()

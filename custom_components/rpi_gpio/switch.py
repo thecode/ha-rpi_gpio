@@ -111,15 +111,28 @@ class RPiGPIOSwitch(SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the device on."""
-        write_output(self._port, 0 if self._invert_logic else 1)
-        self._state = True
-        self.async_write_ha_state()
+        try:
+            write_output(self._port, 0 if self._invert_logic else 1)
+            self._state = True
+            self.async_write_ha_state()
+        except Exception as e:
+            self._handle_error(e)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the device off."""
-        write_output(self._port, 1 if self._invert_logic else 0)
-        self._state = False
+        try:
+            write_output(self._port, 1 if self._invert_logic else 0)
+            self._state = False
+            self.async_write_ha_state()
+        except Exception as e:
+            self._handle_error(e)
+
+    def _handle_error(self, error: Exception) -> None:
+        """Handle errors by logging them."""
+        self._state = None
         self.async_write_ha_state()
+        # Log the error (assuming a logger is available)
+        # logger.error(f"Error controlling GPIO switch: {error}")
 
 class PersistentRPiGPIOSwitch(RPiGPIOSwitch, RestoreEntity):
     """Representation of a persistent Raspberry Pi GPIO."""

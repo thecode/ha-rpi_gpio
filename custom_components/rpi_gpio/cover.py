@@ -104,10 +104,18 @@ class GPIODCover(CoverEntity):
         self._relay_drive = relay_drive
         self._state_port = state_port
         self._state_bias = state_bias
-        self._start_active_low = state_active_low
+        self._state_active_low = state_active_low
         self._attr_is_closed = False != state_active_low
-        hub.add_cover(self, relay_port, relay_active_low, relay_bias, relay_drive,
-                      state_port, state_bias, state_active_low)
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._hub.add_cover(self, self._relay_port, self._relay_active_low, self._relay_bias, 
+                            self._relay_drive, self._state_port, self._state_bias, self._state_active_low)
+        self.async_write_ha_state()
+
+    # dirty hack to enable reuse of switch
+    def is_on(self):
+        return self.is_closed
 
     def handle_event(self):
         self._attr_is_closed = self._hub.update(self._state_port)

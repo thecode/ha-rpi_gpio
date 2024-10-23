@@ -114,6 +114,7 @@ class GPIODCover(CoverEntity):
         self.async_write_ha_state()
 
     # dirty hack to enable reuse of switch
+    @cached_property
     def is_on(self):
         return False
 

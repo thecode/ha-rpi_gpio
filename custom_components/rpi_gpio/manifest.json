@@ -1,7 +1,7 @@
 {
   "domain": "rpi_gpio",
   "name": "Raspberry Pi GPIO",
-  "codeowners": [ "@thecode" ],
+  "codeowners": [ "@thecode", "@tomer-w" ],
   "documentation": "https://github.com/thecode/ha-rpi_gpio",
   "integration_type": "hub",
   "iot_class": "local_push",

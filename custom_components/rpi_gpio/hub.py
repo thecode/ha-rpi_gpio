@@ -135,16 +135,15 @@ class Hub:
             _LOGGER.debug(f"Event: {event}")
             self._entities[event.line_offset].handle_event()
 
-    def add_switch(self, entity, port, active_low, bias, drive_mode) -> None:
+    def add_switch(self, entity, port, active_low, bias, drive_mode, init_output_value = True) -> None:
         _LOGGER.debug(f"in add_switch {port}")
-
         self._entities[port] = entity
         self._config[port] = gpiod.LineSettings(
             direction = Direction.OUTPUT,
             bias = BIAS[bias],
             drive = DRIVE[drive_mode],
             active_low = active_low,
-            output_value = Value.ACTIVE if entity.is_on else Value.INACTIVE
+            output_value = Value.ACTIVE if init_output_value and entity.is_on else Value.INACTIVE
         )
 
     def turn_on(self, port) -> None:
@@ -182,7 +181,7 @@ class Hub:
     def add_cover(self, entity, relay_port, relay_active_low, relay_bias, relay_drive, 
                   state_port, state_bias, state_active_low) -> None:
         _LOGGER.debug(f"in add_cover {relay_port} {state_port}")
-        self.add_switch(entity, relay_port, relay_active_low, relay_bias, relay_drive)
+        self.add_switch(entity, relay_port, relay_active_low, relay_bias, relay_drive, init_output_value = False)
         self.add_sensor(entity, state_port, state_active_low, state_bias, 50)
         self.update_lines()
 

@@ -113,11 +113,6 @@ class GPIODCover(CoverEntity):
                             self._relay_drive, self._state_port, self._state_bias, self._state_active_low)
         self.async_write_ha_state()
 
-    # dirty hack to enable reuse of switch
-    @cached_property
-    def is_on(self):
-        return False
-
     def handle_event(self):
         self._attr_is_closed = self._hub.update(self._state_port)
         self.schedule_update_ha_state(False)

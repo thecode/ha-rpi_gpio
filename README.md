@@ -4,6 +4,8 @@
 
 The `rpi_gpio` integration supports the following platforms: `Binary Sensor`, `Cover`, `Switch`
 
+`rpi_gpio` is based on `gpiod` in [ha-gpio](https://codeberg.org/raboof/ha-gpio) and `ha_gpiod` in [ha_gpiod](https://github.com/jdeneef/ha_gpiod)
+
 # Installation
 
 ### HACS
@@ -16,13 +18,31 @@ Copy the `rpi_gpio` folder and all of its contents into your Home Assistant's `c
 
 # Usage
 
+The `gpiod` platform will be initialized using the path to the gpio chip. When path is not in the config `/dev/gpiochip[0-5]` are tested for a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`. So with a raspberry pi you should be OK to leave the path empty.
+
+Raspberry Pi | GPIO Device
+---          | ---
+RPi3, RPi4   | `/dev/gpiochip0`
+RPi5         | `/dev/gpiochip4`
+
+```yaml
+# setup gpiod chip; mostly not required
+gpiod:
+  path: '/dev/gpiochip0'
+```
+
+### Options
+
+Key | Required | Default | Type | Description
+--- | --- | --- | --- | ---
+`gpiod` | only for path|- |- | `gpiod` platform config and initialization, only required when you need to specify a specific gpiodevice path (see path)
+`path` | no | discovered | string | path to gpio device, if not set auto discovered
+
 ## Binary Sensor
 
 The `rpi_gpio` binary sensor platform allows you to read sensor values of the GPIOs of your [Raspberry Pi](https://www.raspberrypi.org/).
 
 ### Configuration
-
-[Legacy binary sensor configuration](https://github.com/thecode/ha-rpi_gpio/blob/main/legacy-config.md#binary-sensor)
 
 To use your Raspberry Pi's GPIO in your installation, add the following to your `configuration.yaml` file:
 
@@ -59,10 +79,11 @@ binary_sensor:
 | -------------- | -------- | --------------------- | --------|------------------------------------------------------------------------------------------------------------ |
 | `sensors`      | yes      |                       | list    | List of sensor IO ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
 | `name`         | yes      |                       | string  | The name for the binary sensor entity                                                                       |
+| `port`         | yes      |                       | integer | the GPIO port to be used                                                                                    |
 | `unique_id`    | no       |                       | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI |
 | `bouncetime`   | no       | `50`                  | integer | The time in milliseconds for port debouncing                                                                |
 | `invert_logic` | no       | `false` (ACTIVE HIGH) | boolean | If `true`, inverts the output logic to ACTIVE LOW                                                           |
-| `pull_mode`    | no       | `UP`                  | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor                 |
+| `pull_mode`    | no       | `UP`                  | string  | control bias setting of GPIO, used to define the electrical state of a GPIO line when not actively driven; `UP` set weak pull-up resistor on the line, ensuring that the line is pulled to a high level (3.3V or 5V) when not actively driven; `DOWN` sets weak pull-down resistor to pull to low level (0V), `DISABLED` remains floating, `AS_IS` not changed                 |
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 
@@ -101,6 +122,8 @@ cover:
     covers:
       - relay_pin: 10
         state_pin: 11
+        name: "Left door"
+        unique_id: "left_door_cover_port_11"
       - relay_pin: 12
         state_pin: 13
         name: "Right door"
@@ -130,8 +153,6 @@ If you don't have Home Assistant running on your Raspberry Pi and you want to us
 The `rpi_gpio` switch platform allows you to control the GPIOs of your [Raspberry Pi](https://www.raspberrypi.org/).
 
 ### Configuration
-
-[Legacy switch configuration](https://github.com/thecode/ha-rpi_gpio/blob/main/legacy-config.md#switch)
 
 To use your Raspberry Pi's GPIO in your installation, add the following to your `configuration.yaml` file:
 
@@ -167,9 +188,13 @@ switch:
 | -------------- | -------- | ------- | --------| ----------------------------------------------------------------------------------------------------------- |
 | `switches`     | yes      |         | list    | List of switch IO ports ([BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
 | `name`         | yes      |         | string  | The name for the switch entity                                                                              |
-| `unique_id`    | no       |         | string  | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI |
+| `port`         | yes      |         | integer | the GPIO port to be used                                                                                    |
+| `unique_id`    | no       |         | string  | An ID that uniquely identifies the switch. Set this to a unique value to allow customization through the UI, auto generated when not set manually in config |
 | `invert_logic` | no       | `false` | boolean | If true, inverts the output logic to ACTIVE LOW                                                             |
 | `persistent`   | no       | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash               |
+| `pull_mode`    | no       | `AS_IS` | string  | Type of internal pull resistor to use: `UP` - pull-up resistor, `DOWN` - pull-down resistor, `AS-IS` no change |
+| `drive`        |no        | `PUSH_PULL`|string | control drive configuration of the GPIO, determines how the line behaves when it is set to output mode; `PUSH_PULL`, GPIO line can both source and sink current, can actively drive the line to both high and low states. `OPEN-DRAIN`, GPPIO can only sink current (drive the line to low) and is otherwise left floating, and `OPEN-SOURCE` the reverse.
+|`persistent`    | no       | `false` | boolean | If true, the switch state will be persistent in HA and will be restored if HA restart / crash.              |
 
 For more details about the GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 
@@ -184,3 +209,6 @@ switch:
       - port: 17
         name: "Speaker Relay"
 ```
+
+# Reporting issues
+*Before* reporting issues please enable debug logging as described [here](https://www.home-assistant.io/docs/configuration/troubleshooting/#enabling-debug-logging), check logs and report issue attaching the log file.

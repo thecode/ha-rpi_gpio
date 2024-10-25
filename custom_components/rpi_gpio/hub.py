@@ -188,5 +188,4 @@ class Hub:
         _LOGGER.debug(f"in add_cover {relay_port} {state_port}")
         self.add_switch(entity, relay_port, relay_active_low, relay_bias, relay_drive, init_output_value = False)
         self.add_sensor(entity, state_port, state_active_low, state_bias, 50)
-        self.update_lines()
 

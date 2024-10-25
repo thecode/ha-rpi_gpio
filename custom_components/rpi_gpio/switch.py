@@ -76,7 +76,7 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
     _attr_should_poll = False
 
     def __init__(self, hub, name, port, unique_id, active_low, bias, drive, persistent):
-        _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id} - active_low: {active_low} - bias: {bias} - drive: {drive}")
+        _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id} - active_low: {active_low} - bias: {bias} - drive: {drive} - persistent: {persistent}")
         self._hub = hub
         self._attr_name = name
         self._attr_unique_id = unique_id

@@ -114,7 +114,7 @@ class GPIODCover(CoverEntity):
         self.async_write_ha_state()
 
     def handle_event(self):
-        self._attr_is_closed = self._hub.update(self._state_port)
+        self._attr_is_closed = self._hub.get_line_value(self._state_port)
         self.schedule_update_ha_state(False)
 
     def close_cover(self, **kwargs):

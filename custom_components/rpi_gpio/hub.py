@@ -46,11 +46,13 @@ class Hub:
 
         if path:
             # use config
+            _LOGGER.debug(f"trying to use configured device: {path}")
             if self.verify_gpiochip(path):
                 self._online = True
                 self._path = path
         else:
             # discover
+            _LOGGER.debug(f"auto discovering gpio device")
             for d in [0,4,1,2,3,5]:
                 # rpi3,4 using 0. rpi5 using 4
                 path = f"/dev/gpiochip{d}"
@@ -59,15 +61,18 @@ class Hub:
                     self._path = path
                     break
 
-        if not self._online:
-            _LOGGER.error("No gpio device detected, bailing out")
-            raise HomeAssistantError("No gpio device detected")
+        self.verify_online()
 
         _LOGGER.debug(f"using gpio_device: {self._path}")
 
         # startup and shutdown triggers of hass
         self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, self.startup)
         self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self.cleanup)
+
+    def verify_online(self):
+        if not self._online:
+            _LOGGER.error("No gpio device detected, bailing out")
+            raise HomeAssistantError("No gpio device detected")
 
     def verify_gpiochip(self, path):
         if not gpiod.is_gpiochip_device(path):
@@ -148,10 +153,12 @@ class Hub:
 
     def turn_on(self, port) -> None:
         _LOGGER.debug(f"in turn_on {port}")
+        self.verify_online()
         self._lines.set_value(port, Value.ACTIVE)
 
     def turn_off(self, port) -> None:
         _LOGGER.debug(f"in turn_off {port}")
+        self.verify_online()
         self._lines.set_value(port, Value.INACTIVE)
 
     def add_sensor(self, entity, port, active_low, bias, debounce) -> None:
@@ -175,7 +182,7 @@ class Hub:
         )
         self._edge_events = True
 
-    def update(self, port, **kwargs):
+    def get_line_value(self, port, **kwargs):
         return self._lines.get_value(port) == Value.ACTIVE
 
     def add_cover(self, entity, relay_port, relay_active_low, relay_bias, relay_drive, 
@@ -183,5 +190,4 @@ class Hub:
         _LOGGER.debug(f"in add_cover {relay_port} {state_port}")
         self.add_switch(entity, relay_port, relay_active_low, relay_bias, relay_drive, init_output_value = False)
         self.add_sensor(entity, state_port, state_active_low, state_bias, 50)
-        self.update_lines()
 

@@ -76,7 +76,7 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
     _attr_should_poll = False
 
     def __init__(self, hub, name, port, unique_id, active_low, bias, drive, persistent):
-        _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id} - active_low: {active_low} - bias: {bias} - drive: {drive}")
+        _LOGGER.debug(f"GPIODSwitch init: {port} - {name} - {unique_id} - active_low: {active_low} - bias: {bias} - drive: {drive} - persistent: {persistent}")
         self._hub = hub
         self._attr_name = name
         self._attr_unique_id = unique_id
@@ -93,7 +93,7 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
         if not state or not self._persistent:
             self._attr_is_on = False
         else: 
-            _LOGGER.debug(f"GPIODSwitch async_added_to_has initial port: {self._port} persistent: {self._persistent} state: {state.state}")
+            _LOGGER.debug(f"setting initial persistent state for: {self._port}. state: {state.state}")
             self._attr_is_on = True if state.state == STATE_ON else False
         self._hub.add_switch(self, self._port, self._active_low, self._bias, self._drive_mode)
         self.async_write_ha_state()
@@ -109,5 +109,5 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
         self.async_write_ha_state()
 
     def handle_event(self):
-        self._attr_is_on = self._hub.update(self._port)
+        self._attr_is_on = self._hub.get_line_value(self._port)
         self.schedule_update_ha_state(False)

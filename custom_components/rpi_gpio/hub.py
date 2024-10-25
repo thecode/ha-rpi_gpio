@@ -46,11 +46,13 @@ class Hub:
 
         if path:
             # use config
+            _LOGGER.debug(f"trying to use configured device: {path}")
             if self.verify_gpiochip(path):
                 self._online = True
                 self._path = path
         else:
             # discover
+            _LOGGER.debug(f"auto discovering gpio device")
             for d in [0,4,1,2,3,5]:
                 # rpi3,4 using 0. rpi5 using 4
                 path = f"/dev/gpiochip{d}"

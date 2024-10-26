@@ -96,7 +96,11 @@ class Hub:
             return
 
         # setup lines
-        self.update_lines()
+        try:
+            self.update_lines()
+        except Exception as e:
+            _LOGGER.error(f"Failed to update lines: {e}")
+            return    
 
         if not self._edge_events:
             return
@@ -129,11 +133,11 @@ class Hub:
             self._lines.release()
 
         _LOGGER.debug(f"updating lines: {self._config}")
-        self._lines = gpiod.request_lines(
-            self._path,
+        self._lines = self._chip.request_lines(
             consumer = "rpi_gpio",
             config = self._config
         )
+        _LOGGER.debug(f"update_lines new lines: {self._lines}")
 
     def handle_events(self):
         for event in self._lines.read_edge_events():
@@ -142,6 +146,10 @@ class Hub:
 
     def add_switch(self, entity, port, active_low, bias, drive_mode, init_output_value = True) -> None:
         _LOGGER.debug(f"in add_switch {port}")
+
+        info = self._chip.get_line_info(port)
+        _LOGGER.debug(f"original line info: {info}")
+
         self._entities[port] = entity
         self._config[port] = gpiod.LineSettings(
             direction = Direction.OUTPUT,
@@ -163,6 +171,10 @@ class Hub:
 
     def add_sensor(self, entity, port, active_low, bias, debounce) -> None:
         _LOGGER.debug(f"in add_sensor {port}")
+
+        info = self._chip.get_line_info(port)
+        _LOGGER.debug(f"original line info: {info}")
+
         # read current status of the sensor
         line = self._chip.request_lines({ port: {} })
         value = True if line.get_value(port) == Value.ACTIVE else False

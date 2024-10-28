@@ -25,6 +25,8 @@ CONFIG_SCHEMA = vol.Schema(
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the GPIO component."""
+    version = getattr(hass.data["integrations"][DOMAIN], "version", 0)
+    _LOGGER.debug(f"{DOMAIN} integration starting. Version: {version}")
     path = config.get(DOMAIN, {}).get(CONF_PATH) 
     hub = Hub(hass, path)
     hass.data[DOMAIN] = hub

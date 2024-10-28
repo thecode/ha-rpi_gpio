@@ -89,12 +89,24 @@ class Hub:
         _LOGGER.debug(f"verify_gpiochip gpiodevice: {path} has pinctrl")
         return True
 
+    def verify_port_ready(self, port: int):
+        info = self._chip.get_line_info(port)
+        _LOGGER.debug(f"original port info: {info}")
+        if info.used and info.consumer != DOMAIN:
+            _LOGGER.error(f"Port {port} already in use by {info.consumer}")
+            raise HomeAssistantError(f"Port {port} already in use by {info.consumer}")
+
+
     async def startup(self, _):
         """Stuff to do after starting."""
         _LOGGER.debug(f"startup {DOMAIN} hub")
         if not self._online:
+            _LOGGER.debug(f"integration is not online")
             return
-
+        if not self._config:
+            _LOGGER.debug(f"gpiod config is empty")
+            return
+        
         # setup lines
         try:
             self.update_lines()
@@ -125,16 +137,12 @@ class Hub:
         return self._id
 
     def update_lines(self) -> None:
-        if not self._online:
-            _LOGGER.debug(f"gpiod hub not online {self._path}")
-        if not self._config:
-            _LOGGER.debug(f"gpiod config is empty")
         if self._lines:
             self._lines.release()
 
         _LOGGER.debug(f"updating lines: {self._config}")
         self._lines = self._chip.request_lines(
-            consumer = "rpi_gpio",
+            consumer = DOMAIN,
             config = self._config
         )
         _LOGGER.debug(f"update_lines new lines: {self._lines}")
@@ -146,9 +154,8 @@ class Hub:
 
     def add_switch(self, entity, port, active_low, bias, drive_mode, init_output_value = True) -> None:
         _LOGGER.debug(f"in add_switch {port}")
-
-        info = self._chip.get_line_info(port)
-        _LOGGER.debug(f"original line info: {info}")
+        self.verify_online()
+        self.verify_port_ready(port)
 
         self._entities[port] = entity
         self._config[port] = gpiod.LineSettings(
@@ -171,9 +178,8 @@ class Hub:
 
     def add_sensor(self, entity, port, active_low, bias, debounce) -> None:
         _LOGGER.debug(f"in add_sensor {port}")
-
-        info = self._chip.get_line_info(port)
-        _LOGGER.debug(f"original line info: {info}")
+        self.verify_online()
+        self.verify_port_ready(port)
 
         # read current status of the sensor
         line = self._chip.request_lines({ port: {} })

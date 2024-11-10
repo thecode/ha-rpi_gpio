@@ -82,7 +82,7 @@ async def async_setup_platform(
                 cover.get(CONF_STATE_PIN),
                 state_pull_mode,
                 invert_state,
-                cover.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{cover.get(CONF_RELAY_PORT) or cover.get("relay_pin")}_{cover[CONF_NAME].lower().replace(' ', '_')}",
+                cover.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{cover.get(CONF_RELAY_PIN)}_{cover[CONF_NAME].lower().replace(' ', '_')}",
             )
         )
 

@@ -181,13 +181,6 @@ class Hub:
         self.verify_online()
         self.verify_port_ready(port)
 
-        # read current status of the sensor
-        line = self._chip.request_lines({ port: {} })
-        value = True if line.get_value(port) == Value.ACTIVE else False
-        entity.is_on = True if value ^ active_low else False
-        line.release()
-        _LOGGER.debug(f"current value for port {port}: {entity.is_on}")
-
         self._entities[port] = entity
         self._config[port] = gpiod.LineSettings(
             direction = Direction.INPUT,
@@ -195,12 +188,23 @@ class Hub:
             bias = BIAS[bias],
             active_low = active_low,
             debounce_period = timedelta(milliseconds=debounce),
-            event_clock = Clock.REALTIME,
-            output_value = Value.ACTIVE if entity.is_on else Value.INACTIVE,
+            event_clock = Clock.REALTIME
         )
+
+        # read current status of the sensor
+        with self._chip.request_lines(
+            consumer=DOMAIN,
+            config={port: gpiod.LineSettings(
+                direction = Direction.INPUT,
+                bias = BIAS[bias],
+                active_low = active_low)},
+        ) as request:
+            entity._attr_is_on = True if request.get_value(port) == Value.ACTIVE else False
+
+        _LOGGER.debug(f"current value for port {port}: {entity.is_on}")
         self._edge_events = True
 
-    def get_line_value(self, port, **kwargs):
+    def get_line_value(self, port):
         return self._lines.get_value(port) == Value.ACTIVE
 
     def add_cover(self, entity, relay_port, relay_active_low, relay_bias, relay_drive, 

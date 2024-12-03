@@ -199,7 +199,6 @@ class Hub:
                 bias = BIAS[bias],
                 active_low = active_low)},
         ) as request:
-            # Although we prefer to set the _attr_is_on attribute, in cover it does not exists for whatever reason.
             entity.is_on = True if request.get_value(port) == Value.ACTIVE else False
 
         _LOGGER.debug(f"current value for port {port}: {entity.is_on}")

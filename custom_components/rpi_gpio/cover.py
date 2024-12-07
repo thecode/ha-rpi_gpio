@@ -17,6 +17,7 @@ from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_UNIQUE_ID
 from .hub import BIAS, DRIVE
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+import asyncio
 
 CONF_RELAY_PIN = "relay_pin"
 CONF_RELAY_TIME = "relay_time"
@@ -106,50 +107,63 @@ class GPIODCover(CoverEntity):
         self._state_bias = state_bias
         self._state_active_low = state_active_low
         self._attr_is_closed = False != state_active_low
+        self._relay_line, self._state_line = self._hub.add_cover(self, self._relay_port, self._relay_active_low, self._relay_bias, 
+                            self._relay_drive, self._state_port, self._state_bias, self._state_active_low)        
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        self._hub.add_cover(self, self._relay_port, self._relay_active_low, self._relay_bias, 
-                            self._relay_drive, self._state_port, self._state_bias, self._state_active_low)
-        self.async_write_ha_state()
+        _LOGGER.debug(f"GPIODCover async_added_to_hass: Adding fd:{self._state_line.fd}")
+        self._hub._hass.loop.add_reader(self._state_line.fd, self.handle_event)
+
+    async def async_will_remove_from_hass(self) -> None:
+        await super().async_will_remove_from_hass()
+        _LOGGER.debug(f"GPIODCover async_will_remove_from_hass: Removing fd:{self._state_line.fd}")
+        self._hub._hass.loop.remove_reader(self._state_line.fd)
+        self._relay_line.release()
+        self._state_line.release()
 
     def handle_event(self):
-        self._attr_is_closed = self._hub.get_line_value(self._state_port)
+        for event in self._state_line.read_edge_events():
+            self._attr_is_closed = True if event.event_type is event.Type.RISING_EDGE else False
+            _LOGGER.debug(f"Event: {event}. New _attr_is_closed value: {self._attr_is_closed}")
         self.schedule_update_ha_state(False)
 
-    def close_cover(self, **kwargs):
+    async def async_close_cover(self, **kwargs):
+        _LOGGER.debug(f"GPIODCover async_close_cover: is_closed: {self.is_closed}. is_closing: {self.is_closing}, is_opening: {self.is_opening}")
         if self.is_closed:
             return
-        self._hub.turn_on(self._relay_port)
+        self._hub.turn_on(self._relay_line, self._relay_port)
         self._attr_is_closing = True
-        self.schedule_update_ha_state(False)
-        sleep(self._relay_time)
+        self.async_write_ha_state()
+        await asyncio.sleep(self._relay_time)
         if not self.is_closing:
             # closing stopped
             return
-        self._hub.turn_off(self._relay_port)
+        self._hub.turn_off(self._relay_line, self._relay_port)
         self._attr_is_closing = False
-        self.handle_event()
+        self.async_write_ha_state()
 
-    def open_cover(self, **kwargs):
+    async def async_open_cover(self, **kwargs):
+        _LOGGER.debug(f"GPIODCover async_open_cover: is_closed: {self.is_closed}. is_closing: {self.is_closing}, is_opening: {self.is_opening}")
         if not self.is_closed:
             return
-        self._hub.turn_on(self._relay_port)
+        self._hub.turn_on(self._relay_line, self._relay_port)
         self._attr_is_opening = True
-        self.schedule_update_ha_state(False)
-        sleep(self._relay_time)
+        self.async_write_ha_state()
+        await asyncio.sleep(self._relay_time)
         if not self.is_opening:
             # opening stopped
             return
-        self._hub.turn_off(self._relay_port)
+        self._hub.turn_off(self._relay_line, self._relay_port)
         self._attr_is_opening = False
-        self.handle_event()
+        self.async_write_ha_state()
 
-    def stop_cover(self, **kwargs):
+    async def async_stop_cover(self, **kwargs):
+        _LOGGER.debug(f"GPIODCover async_stop_cover: is_closed: {self.is_closed}. is_closing: {self.is_closing}, is_opening: {self.is_opening}")
         if not (self.is_closing or self.is_opening):
             return
-        self._hub.turn_off(self._relay_port)
+        self._hub.turn_off(self._relay_line, self._relay_port)
         self._attr_is_opening = False
         self._attr_is_closing = False
-        self.schedule_update_ha_state(False)
+        self.async_write_ha_state()
 

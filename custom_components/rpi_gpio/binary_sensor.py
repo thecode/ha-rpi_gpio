@@ -12,6 +12,7 @@ from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import CONF_SENSORS, CONF_NAME, CONF_PORT, CONF_UNIQUE_ID
 from .hub import BIAS
+
 CONF_INVERT_LOGIC = "invert_logic"
 DEFAULT_INVERT_LOGIC = False
 CONF_BOUNCETIME = "bouncetime"
@@ -78,12 +79,22 @@ class GPIODBinarySensor(BinarySensorEntity):
         self._active_low = active_low
         self._bias = bias
         self._debounce = debounce
+        self._line, current_is_on = self._hub.add_sensor(self._port, self._active_low, self._bias, self._debounce)
+        self._attr_is_on = current_is_on        
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        self._hub.add_sensor(self, self._port, self._active_low, self._bias, self._debounce)
-        self.async_write_ha_state()
+        _LOGGER.debug(f"GPIODBinarySensor async_added_to_hass: Adding fd:{self._line.fd}")
+        self._hub._hass.loop.add_reader(self._line.fd, self.handle_event)
+
+    async def async_will_remove_from_hass(self) -> None:
+        await super().async_will_remove_from_hass()
+        _LOGGER.debug(f"GPIODBinarySensor async_will_remove_from_hass: Removing fd:{self._line.fd}")
+        self._hub._hass.loop.remove_reader(self._line.fd)
+        self._line.release()
 
     def handle_event(self):
-        self._attr_is_on = self._hub.get_line_value(self._port)
+        for event in self._line.read_edge_events():
+            self._attr_is_on = True if event.event_type is event.Type.RISING_EDGE else False
+            _LOGGER.debug(f"Event: {event}. New line value: {self._attr_is_on}")
         self.schedule_update_ha_state(False)

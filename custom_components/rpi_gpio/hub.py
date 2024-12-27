@@ -39,10 +39,6 @@ class Hub:
         self._id = path
         self._hass = hass
         self._online = False
-        self._lines : gpiod.LineRequest = None
-        self._config : Dict[int, gpiod.LineSettings] = {}
-        self._edge_events = False
-        self._entities = {}
 
         if path:
             # use config
@@ -62,12 +58,7 @@ class Hub:
                     break
 
         self.verify_online()
-
         _LOGGER.debug(f"using gpio_device: {self._path}")
-
-        # startup and shutdown triggers of hass
-        self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, self.startup)
-        self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self.cleanup)
 
     def verify_online(self):
         if not self._online:
@@ -96,120 +87,60 @@ class Hub:
             _LOGGER.error(f"Port {port} already in use by {info.consumer}")
             raise HomeAssistantError(f"Port {port} already in use by {info.consumer}")
 
-
-    async def startup(self, _):
-        """Stuff to do after starting."""
-        _LOGGER.debug(f"startup {DOMAIN} hub")
-        if not self._online:
-            _LOGGER.debug(f"integration is not online")
-            return
-        if not self._config:
-            _LOGGER.debug(f"gpiod config is empty")
-            return
-        
-        # setup lines
-        try:
-            self.update_lines()
-        except Exception as e:
-            _LOGGER.error(f"Failed to update lines: {e}")
-            return    
-
-        if not self._edge_events:
-            return
-
-        _LOGGER.debug("Start listener")
-        self._hass.loop.add_reader(self._lines.fd, self.handle_events)
-
-    def cleanup(self, _):
-        """Stuff to do before stopping."""
-        _LOGGER.debug(f"cleanup {DOMAIN} hub")
-        if self._config:
-            self._config.clear()
-        if self._lines:
-            self._lines.release()
-        if self._chip:
-            self._chip.close()
-        self._online = False
-
     @property
     def hub_id(self) -> str:
         """ID for hub"""
         return self._id
 
-    def update_lines(self) -> None:
-        if self._lines:
-            self._lines.release()
-
-        _LOGGER.debug(f"updating lines: {self._config}")
-        self._lines = self._chip.request_lines(
-            consumer = DOMAIN,
-            config = self._config
-        )
-        _LOGGER.debug(f"update_lines new lines: {self._lines}")
-
-    def handle_events(self):
-        for event in self._lines.read_edge_events():
-            _LOGGER.debug(f"Event: {event}")
-            self._entities[event.line_offset].handle_event()
-
-    def add_switch(self, entity, port, active_low, bias, drive_mode, init_output_value = True) -> None:
-        _LOGGER.debug(f"in add_switch {port}")
+    def add_switch(self, port, active_low, bias, drive_mode, init_state) -> gpiod.LineRequest:
+        _LOGGER.debug(f"add_switch - port: {port}, active_low: {active_low}, bias: {bias}, drive_mode: {drive_mode}, init_state: {init_state}")
         self.verify_online()
         self.verify_port_ready(port)
 
-        self._entities[port] = entity
-        self._config[port] = gpiod.LineSettings(
+        line_request = self._chip.request_lines(
+            consumer=DOMAIN,
+            config={port: gpiod.LineSettings(
             direction = Direction.OUTPUT,
             bias = BIAS[bias],
             drive = DRIVE[drive_mode],
             active_low = active_low,
-            output_value = Value.ACTIVE if init_output_value and entity.is_on else Value.INACTIVE
-        )
+            output_value = Value.ACTIVE if init_state is not None and init_state else Value.INACTIVE)})
+        _LOGGER.debug(f"add_switch line_request: {line_request}")
+        return line_request
 
-    def turn_on(self, port) -> None:
+    def turn_on(self, line, port) -> None:
         _LOGGER.debug(f"in turn_on {port}")
         self.verify_online()
-        self._lines.set_value(port, Value.ACTIVE)
+        line.set_value(port, Value.ACTIVE)
 
-    def turn_off(self, port) -> None:
+    def turn_off(self, line, port) -> None:
         _LOGGER.debug(f"in turn_off {port}")
         self.verify_online()
-        self._lines.set_value(port, Value.INACTIVE)
+        line.set_value(port, Value.INACTIVE)
 
-    def add_sensor(self, entity, port, active_low, bias, debounce) -> None:
-        _LOGGER.debug(f"in add_sensor {port}")
+    def add_sensor(self, port, active_low, bias, debounce) -> gpiod.LineRequest:
+        _LOGGER.debug(f"add_sensor - port: {port}, active_low: {active_low}, bias: {bias}, debounce: {debounce}")
         self.verify_online()
         self.verify_port_ready(port)
 
-        self._entities[port] = entity
-        self._config[port] = gpiod.LineSettings(
-            direction = Direction.INPUT,
-            edge_detection = Edge.BOTH,
-            bias = BIAS[bias],
-            active_low = active_low,
-            debounce_period = timedelta(milliseconds=debounce),
-            event_clock = Clock.REALTIME
-        )
-
-        # read current status of the sensor
-        with self._chip.request_lines(
+        line_request = self._chip.request_lines(
             consumer=DOMAIN,
             config={port: gpiod.LineSettings(
                 direction = Direction.INPUT,
+                edge_detection = Edge.BOTH,
                 bias = BIAS[bias],
-                active_low = active_low)},
-        ) as request:
-            entity.is_on = True if request.get_value(port) == Value.ACTIVE else False
+                active_low = active_low,
+                debounce_period = timedelta(milliseconds=debounce),
+                event_clock = Clock.REALTIME)})
 
-        _LOGGER.debug(f"current value for port {port}: {entity.is_on}")
-        self._edge_events = True
+        current_is_on = True if line_request.get_value(port) == Value.ACTIVE else False
+        _LOGGER.debug(f"add_sensor line_request: {line_request}. current state: {current_is_on}")
+        return line_request, current_is_on
 
-    def get_line_value(self, port):
-        return self._lines.get_value(port) == Value.ACTIVE
-
-    def add_cover(self, entity, relay_port, relay_active_low, relay_bias, relay_drive, 
-                  state_port, state_bias, state_active_low) -> None:
-        _LOGGER.debug(f"in add_cover {relay_port} {state_port}")
-        self.add_switch(entity, relay_port, relay_active_low, relay_bias, relay_drive, init_output_value = False)
-        self.add_sensor(entity, state_port, state_active_low, state_bias, 50)
+    def add_cover(self, relay_port, relay_active_low, relay_bias, relay_drive, 
+                  state_port, state_bias, state_active_low):
+        _LOGGER.debug(f"add_cover - relay_port: {relay_port}, state_port: {state_port}")
+        relay_line = self.add_switch(relay_port, relay_active_low, relay_bias, relay_drive, False)
+        state_line, current_is_on = self.add_sensor(state_port, state_active_low, state_bias, 50)
+        return relay_line, state_line, current_is_on
 

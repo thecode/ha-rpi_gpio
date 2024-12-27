@@ -92,8 +92,8 @@ class Hub:
         """ID for hub"""
         return self._id
 
-    def add_switch(self, entity, port, active_low, bias, drive_mode, init_output_value = True) -> gpiod.LineRequest:
-        _LOGGER.debug(f"add_switch - port: {port}, active_low: {active_low}, bias: {bias}, drive_mode: {drive_mode}, init_output_value: {init_output_value}")
+    def add_switch(self, port, active_low, bias, drive_mode, init_state) -> gpiod.LineRequest:
+        _LOGGER.debug(f"add_switch - port: {port}, active_low: {active_low}, bias: {bias}, drive_mode: {drive_mode}, init_state: {init_state}")
         self.verify_online()
         self.verify_port_ready(port)
 
@@ -104,7 +104,7 @@ class Hub:
             bias = BIAS[bias],
             drive = DRIVE[drive_mode],
             active_low = active_low,
-            output_value = Value.ACTIVE if init_output_value and entity.is_on else Value.INACTIVE)})
+            output_value = Value.ACTIVE if init_state is not None and init_state else Value.INACTIVE)})
         _LOGGER.debug(f"add_switch line_request: {line_request}")
         return line_request
 
@@ -118,7 +118,7 @@ class Hub:
         self.verify_online()
         line.set_value(port, Value.INACTIVE)
 
-    def add_sensor(self, entity, port, active_low, bias, debounce) -> gpiod.LineRequest:
+    def add_sensor(self, port, active_low, bias, debounce) -> gpiod.LineRequest:
         _LOGGER.debug(f"add_sensor - port: {port}, active_low: {active_low}, bias: {bias}, debounce: {debounce}")
         self.verify_online()
         self.verify_port_ready(port)
@@ -133,14 +133,14 @@ class Hub:
                 debounce_period = timedelta(milliseconds=debounce),
                 event_clock = Clock.REALTIME)})
 
-        entity.is_on = True if line_request.get_value(port) == Value.ACTIVE else False
-        _LOGGER.debug(f"add_sensor line_request: {line_request}. current state: {entity.is_on}")
-        return line_request
+        current_is_on = True if line_request.get_value(port) == Value.ACTIVE else False
+        _LOGGER.debug(f"add_sensor line_request: {line_request}. current state: {current_is_on}")
+        return line_request, current_is_on
 
-    def add_cover(self, entity, relay_port, relay_active_low, relay_bias, relay_drive, 
+    def add_cover(self, relay_port, relay_active_low, relay_bias, relay_drive, 
                   state_port, state_bias, state_active_low):
         _LOGGER.debug(f"add_cover - relay_port: {relay_port}, state_port: {state_port}")
-        relay_line = self.add_switch(entity, relay_port, relay_active_low, relay_bias, relay_drive, init_output_value = False)
-        state_line = self.add_sensor(entity, state_port, state_active_low, state_bias, 50)
-        return relay_line, state_line
+        relay_line = self.add_switch(relay_port, relay_active_low, relay_bias, relay_drive, False)
+        state_line, current_is_on = self.add_sensor(state_port, state_active_low, state_bias, 50)
+        return relay_line, state_line, current_is_on
 

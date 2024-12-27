@@ -106,9 +106,11 @@ class GPIODCover(CoverEntity):
         self._state_port = state_port
         self._state_bias = state_bias
         self._state_active_low = state_active_low
-        self._attr_is_closed = False != state_active_low
-        self._relay_line, self._state_line = self._hub.add_cover(self, self._relay_port, self._relay_active_low, self._relay_bias, 
-                            self._relay_drive, self._state_port, self._state_bias, self._state_active_low)        
+        self._relay_line, self._state_line, current_is_on = self._hub.add_cover(
+            self._relay_port, self._relay_active_low, self._relay_bias, self._relay_drive,
+            self._state_port, self._state_bias, self._state_active_low)        
+        self._attr_is_closed = current_is_on
+        self.is_on = current_is_on
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

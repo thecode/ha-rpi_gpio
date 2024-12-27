@@ -86,6 +86,7 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
         self._drive_mode = drive
         self._persistent = persistent
         self._line = None
+        self._hub.verify_port_ready(self._port)
         
     async def async_added_to_hass(self) -> None:
         """Call when the switch is added to hass."""
@@ -97,7 +98,7 @@ class GPIODSwitch(SwitchEntity, RestoreEntity):
             _LOGGER.debug(f"setting initial persistent state for: {self._port}. state: {state.state}")
             self._attr_is_on = True if state.state == STATE_ON else False
             self.async_write_ha_state()
-        self._line = self._hub.add_switch(self, self._port, self._active_low, self._bias, self._drive_mode)
+        self._line = self._hub.add_switch(self._port, self._active_low, self._bias, self._drive_mode, self._attr_is_on)
 
     async def async_will_remove_from_hass(self) -> None:
         await super().async_will_remove_from_hass()

@@ -79,7 +79,8 @@ class GPIODBinarySensor(BinarySensorEntity):
         self._active_low = active_low
         self._bias = bias
         self._debounce = debounce
-        self._line = self._hub.add_sensor(self, self._port, self._active_low, self._bias, self._debounce)
+        self._line, current_is_on = self._hub.add_sensor(self._port, self._active_low, self._bias, self._debounce)
+        self._attr_is_on = current_is_on        
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

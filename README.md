@@ -210,4 +210,4 @@ switch:
 ```
 
 # Reporting issues
-*Before* reporting issues please enable debug logging as described [here](https://www.home-assistant.io/docs/configuration/troubleshooting/#enabling-debug-logging), check logs and report issue attaching the log file.
+*Before* reporting issues please enable debug logging as described [here](https://www.home-assistant.io/docs/configuration/troubleshooting/#enabling-debug-logging), check logs and report issue attaching the log file and the relevant YAML section.

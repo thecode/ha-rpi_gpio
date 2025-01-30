@@ -7,7 +7,7 @@ _LOGGER = logging.getLogger(__name__)
 
 from homeassistant.core import HomeAssistant
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, EVENT_HOMEASSISTANT_START
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError,ServiceValidationError
 
 from typing import Dict
 from datetime import timedelta
@@ -73,6 +73,7 @@ class Hub:
         _LOGGER.debug(f"verify_gpiochip: {path} is a gpiochip_device")
         self._chip = gpiod.Chip(path)
         info = self._chip.get_info()
+        _LOGGER.debug(f"verify_gpiochip: {path} info is: {info}")
         if not "pinctrl" in info.label:
             _LOGGER.debug(f"verify_gpiochip: {path} no pinctrl {info.label}")
             return False
@@ -82,10 +83,12 @@ class Hub:
 
     def verify_port_ready(self, port: int):
         info = self._chip.get_line_info(port)
-        _LOGGER.debug(f"original port info: {info}")
-        if info.used and info.consumer != DOMAIN:
-            _LOGGER.error(f"Port {port} already in use by {info.consumer}")
-            raise HomeAssistantError(f"Port {port} already in use by {info.consumer}")
+        _LOGGER.debug(f"original port {port} info: {info}")
+        if info.used:
+            if info.consumer != DOMAIN:
+                raise ServiceValidationError(f"Port {port} already in use by {info.consumer}")
+            else:
+                raise ServiceValidationError(f"Port {port} already in use by another entity, check your config for duplicates port usage")
 
     @property
     def hub_id(self) -> str:
@@ -100,11 +103,11 @@ class Hub:
         line_request = self._chip.request_lines(
             consumer=DOMAIN,
             config={port: gpiod.LineSettings(
-            direction = Direction.OUTPUT,
-            bias = BIAS[bias],
-            drive = DRIVE[drive_mode],
-            active_low = active_low,
-            output_value = Value.ACTIVE if init_state is not None and init_state else Value.INACTIVE)})
+                direction = Direction.OUTPUT,
+                bias = BIAS[bias],
+                drive = DRIVE[drive_mode],
+                active_low = active_low,
+                output_value = Value.ACTIVE if init_state is not None and init_state else Value.INACTIVE)})
         _LOGGER.debug(f"add_switch line_request: {line_request}")
         return line_request
 
@@ -132,9 +135,9 @@ class Hub:
                 active_low = active_low,
                 debounce_period = timedelta(milliseconds=debounce),
                 event_clock = Clock.REALTIME)})
-
+        _LOGGER.debug(f"add_sensor line_request: {line_request}")
         current_is_on = True if line_request.get_value(port) == Value.ACTIVE else False
-        _LOGGER.debug(f"add_sensor line_request: {line_request}. current state: {current_is_on}")
+        _LOGGER.debug(f"add_sensor current state: {current_is_on}")
         return line_request, current_is_on
 
     def add_cover(self, relay_port, relay_active_low, relay_bias, relay_drive, 

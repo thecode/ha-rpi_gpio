@@ -86,9 +86,9 @@ class Hub:
         _LOGGER.debug(f"original port {port} info: {info}")
         if info.used:
             if info.consumer != DOMAIN:
-                raise ServiceValidationError(f"Port {port} already in use by {info.consumer}")
+                raise HomeAssistantError(f"Port {port} already in use by {info.consumer}")
             else:
-                raise ServiceValidationError(f"Port {port} already in use by another entity, check your config for duplicates port usage")
+                raise HomeAssistantError(f"Port {port} already in use by another entity, check your config for duplicates port usage")
 
     @property
     def hub_id(self) -> str:

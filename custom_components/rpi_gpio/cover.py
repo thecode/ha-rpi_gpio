@@ -71,21 +71,24 @@ async def async_setup_platform(
     invert_relay = config[CONF_INVERT_RELAY]
     covers = []
     for cover in config.get(CONF_COVERS):
-        covers.append(
-            GPIODCover(
-                hub,
-                cover[CONF_NAME],
-                cover.get(CONF_RELAY_PIN),
-                relay_time,
-                invert_relay,
-                "AS_IS",
-                "PUSH_PULL",
-                cover.get(CONF_STATE_PIN),
-                state_pull_mode,
-                invert_state,
-                cover.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{cover.get(CONF_RELAY_PIN)}_{cover[CONF_NAME].lower().replace(' ', '_')}",
+        try:
+            covers.append(
+                GPIODCover(
+                    hub,
+                    cover[CONF_NAME],
+                    cover.get(CONF_RELAY_PIN),
+                    relay_time,
+                    invert_relay,
+                    "AS_IS",
+                    "PUSH_PULL",
+                    cover.get(CONF_STATE_PIN),
+                    state_pull_mode,
+                    invert_state,
+                    cover.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{cover.get(CONF_RELAY_PIN)}_{cover[CONF_NAME].lower().replace(' ', '_')}",
+                )
             )
-        )
+        except Exception as e:
+            _LOGGER.error(f"Failed to add cover {cover[CONF_NAME]} for port {cover.get(CONF_RELAY_PIN)}:{cover.get(CONF_STATE_PIN)}: {e}")
 
     async_add_entities(covers)
 

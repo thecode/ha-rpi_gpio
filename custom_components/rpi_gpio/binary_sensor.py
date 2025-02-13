@@ -52,17 +52,20 @@ async def async_setup_platform(
 
     sensors = []
     for sensor in config.get(CONF_SENSORS):
-        sensors.append(
-            GPIODBinarySensor(
-                hub,
-                sensor[CONF_NAME],
-                sensor[CONF_PORT],
-                sensor.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{sensor[CONF_PORT]}_{sensor[CONF_NAME].lower().replace(' ', '_')}",
-                sensor.get(CONF_INVERT_LOGIC),
-                sensor.get(CONF_PULL_MODE),
-                sensor.get(CONF_BOUNCETIME)
+        try:
+            sensors.append(
+                GPIODBinarySensor(
+                    hub,
+                    sensor[CONF_NAME],
+                    sensor[CONF_PORT],
+                    sensor.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{sensor[CONF_PORT]}_{sensor[CONF_NAME].lower().replace(' ', '_')}",
+                    sensor.get(CONF_INVERT_LOGIC),
+                    sensor.get(CONF_PULL_MODE),
+                    sensor.get(CONF_BOUNCETIME)
+                )
             )
-        )
+        except Exception as e:
+            _LOGGER.error(f"Failed to add binary sensor {sensor[CONF_NAME]} for port {sensor[CONF_PORT]}: {e}")
 
     async_add_entities(sensors)
 

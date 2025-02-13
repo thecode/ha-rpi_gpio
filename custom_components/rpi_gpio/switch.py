@@ -56,18 +56,21 @@ async def async_setup_platform(
 
     switches = []
     for switch in config.get(CONF_SWITCHES):
-        switches.append(
-            GPIODSwitch(
-                hub,
-                switch[CONF_NAME],
-                switch[CONF_PORT],
-                switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
-                switch.get(CONF_INVERT_LOGIC),
-                switch.get(CONF_PULL_MODE),
-                switch.get(CONF_DRIVE),
-                switch[CONF_PERSISTENT]
+        try:
+            switches.append(
+                GPIODSwitch(
+                    hub,
+                    switch[CONF_NAME],
+                    switch[CONF_PORT],
+                    switch.get(CONF_UNIQUE_ID) or f"{DOMAIN}_{switch[CONF_PORT]}_{switch[CONF_NAME].lower().replace(' ', '_')}",
+                    switch.get(CONF_INVERT_LOGIC),
+                    switch.get(CONF_PULL_MODE),
+                    switch.get(CONF_DRIVE),
+                    switch[CONF_PERSISTENT]
+                )
             )
-        )
+        except Exception as e:
+            _LOGGER.error(f"Failed to add switch {switch[CONF_NAME]} for port {switch[CONF_PORT]}: {e}")
 
     async_add_entities(switches)
 

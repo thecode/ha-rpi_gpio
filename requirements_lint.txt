@@ -1,7 +1,7 @@
 black==25.1.0
 flake8==7.2.0
 isort==6.0.1
-mypy==1.16.0
+mypy==1.16.1
 pre-commit==4.2.0
 pydocstyle==6.3.0
 pylint==3.3.7

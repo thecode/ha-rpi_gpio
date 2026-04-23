@@ -43,7 +43,7 @@ class Hub:
         if path:
             # use config
             _LOGGER.debug(f"trying to use configured device: {path}")
-            if self.verify_gpiochip(path):
+            if self.verify_gpiochip(path, require_pinctrl=False):
                 self._online = True
                 self._path = path
         else:
@@ -52,7 +52,7 @@ class Hub:
             for d in [0,4,1,2,3,5]:
                 # rpi3,4 using 0. rpi5 using 4
                 path = f"/dev/gpiochip{d}"
-                if self.verify_gpiochip(path):
+                if self.verify_gpiochip(path, require_pinctrl=True):
                     self._online = True
                     self._path = path
                     break
@@ -65,7 +65,7 @@ class Hub:
             _LOGGER.error("No gpio device detected, bailing out")
             raise HomeAssistantError("No gpio device detected")
 
-    def verify_gpiochip(self, path):
+    def verify_gpiochip(self, path, require_pinctrl=True):
         if not gpiod.is_gpiochip_device(path):
             _LOGGER.debug(f"verify_gpiochip: {path} not a gpiochip_device")
             return False
@@ -74,11 +74,11 @@ class Hub:
         self._chip = gpiod.Chip(path)
         info = self._chip.get_info()
         _LOGGER.debug(f"verify_gpiochip: {path} info is: {info}")
-        if not "pinctrl" in info.label:
+        if require_pinctrl and not "pinctrl" in info.label:
             _LOGGER.debug(f"verify_gpiochip: {path} no pinctrl {info.label}")
             return False
 
-        _LOGGER.debug(f"verify_gpiochip gpiodevice: {path} has pinctrl")
+        _LOGGER.debug(f"verify_gpiochip gpiodevice: {path}")
         return True
 
     def verify_port_ready(self, port: int):

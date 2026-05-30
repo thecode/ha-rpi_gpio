@@ -209,5 +209,9 @@ switch:
         name: "Speaker Relay"
 ```
 
+# Resources
+
+- [Raspberry Pi GPIO Pinout](https://raspberry.tips/en/raspberry-pi-gpio-pinout) — interactive reference for all 40 GPIO pins including BCM numbers, functions, and voltage specs
+
 # Reporting issues
 *Before* reporting issues please enable debug logging as described [here](https://www.home-assistant.io/docs/configuration/troubleshooting/#enabling-debug-logging), check logs and report issue attaching the log file and the relevant YAML section.

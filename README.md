@@ -18,7 +18,7 @@ Copy the `rpi_gpio` folder and all of its contents into your Home Assistant's `c
 
 # Usage
 
-The `rpi_gpio` platform will be initialized using the path to the gpio chip. When path is not in the config `/dev/gpiochip[0-5]` are tested for a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`. So with a raspberry pi you should be OK to leave the path empty.
+The `rpi_gpio` platform will be initialized using the path to the gpio chip. When path is not in the config `/dev/gpiochip[0-5]` are tested for a gpiodevice having `pinctrl`, in sequence `[0,4,1,2,3,5]`, followed by any other `/dev/gpiochip*` device (newer kernels may renumber the chips, e.g. `/dev/gpiochip15` on a RPi5). So with a raspberry pi you should be OK to leave the path empty.
 
 Raspberry Pi | GPIO Device
 ---          | ---

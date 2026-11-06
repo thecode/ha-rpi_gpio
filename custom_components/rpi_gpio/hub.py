@@ -9,6 +9,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, EVENT_HOMEASSISTANT_START
 from homeassistant.exceptions import HomeAssistantError,ServiceValidationError
 
+import glob
+import re
 from typing import Dict
 from datetime import timedelta
 import gpiod
@@ -49,9 +51,7 @@ class Hub:
         else:
             # discover
             _LOGGER.debug(f"auto discovering gpio device")
-            for d in [0,4,1,2,3,5]:
-                # rpi3,4 using 0. rpi5 using 4
-                path = f"/dev/gpiochip{d}"
+            for path in self._discovery_candidates():
                 if self.verify_gpiochip(path, require_pinctrl=True):
                     self._online = True
                     self._path = path
@@ -59,6 +59,19 @@ class Hub:
 
         self.verify_online()
         _LOGGER.debug(f"using gpio_device: {self._path}")
+
+    @staticmethod
+    def _discovery_candidates() -> list[str]:
+        """Return gpiochip paths to probe, most likely first.
+
+        rpi3,4 use gpiochip0 and rpi5 traditionally uses gpiochip4, but newer
+        kernels can renumber the chips (e.g. pinctrl-rp1 on gpiochip15 with
+        6.12.x on a Pi 5), so fall back to every other /dev/gpiochip* device.
+        """
+        candidates = [f"/dev/gpiochip{d}" for d in [0, 4, 1, 2, 3, 5]]
+        others = [p for p in glob.glob("/dev/gpiochip*") if p not in candidates]
+        others.sort(key=lambda p: int(re.sub(r"\D", "", p) or 0))
+        return candidates + others
 
     def verify_online(self):
         if not self._online:

@@ -28,7 +28,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     version = getattr(hass.data["integrations"][DOMAIN], "version", 0)
     _LOGGER.debug(f"{DOMAIN} integration starting. Version: {version}")
     path = config.get(DOMAIN, {}).get(CONF_PATH) 
-    hub = Hub(hass, path)
+    # Hub() probes gpiochip devices (blocking I/O), so build it off the event loop.
+    hub = await hass.async_add_executor_job(Hub, hass, path)
     hass.data[DOMAIN] = hub
 
     return True
